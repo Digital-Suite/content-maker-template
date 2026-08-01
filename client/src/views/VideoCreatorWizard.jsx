@@ -585,7 +585,9 @@ export function VideoCreatorWizard() {
                       <div key={scene.id} className="flex space-x-4">
                         <div className="w-8 h-8 rounded-full bg-surface-raised flex items-center justify-center shrink-0 text-sm font-medium">{i+1}</div>
                         <div className="flex-1">
-                          <textarea-text focus:outline-none focus:border-purple-400 resize-none h-20" 
+                          <textarea 
+                            defaultValue={scene.voiceover} 
+                            className="w-full bg-surface-raised border border-border rounded-xl p-3 text-sm text-text focus:outline-none focus:border-primary resize-none h-20" 
                           />
                         </div>
                       </div>
