@@ -1,0 +1,6 @@
+node_modules
+.git
+.github
+.env
+client/node_modules
+client/dist
