@@ -23,6 +23,15 @@ export function useDigitalSuite(navConfig) {
         if (typeof path === 'string') {
           navigate(path);
         }
+      } else if (event.data?.type === 'THEME_CHANGE') {
+        const { theme } = event.data; // 'dark' or 'light'
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+          document.documentElement.classList.remove('light');
+        } else {
+          document.documentElement.classList.add('light');
+          document.documentElement.classList.remove('dark');
+        }
       }
     };
 

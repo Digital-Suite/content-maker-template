@@ -7,5 +7,8 @@ export default {
   theme: {
     extend: {},
   },
+  presets: [
+    require('@digital-suite/ui-kit/tailwind.preset.js')
+  ],
   plugins: [],
 }

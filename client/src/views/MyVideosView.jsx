@@ -50,17 +50,17 @@ export function MyVideosView() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#0f1014] text-white">
+    <div className="h-full flex flex-col bg-bg text-white">
       {/* Header */}
-      <div className="bg-[#1a1c23]/90 backdrop-blur-md border-b border-[#2e3039] p-6 shrink-0 sticky top-0 z-10 shadow-sm">
+      <div className="bg-surface/90 backdrop-blur-md border-b border-border p-6 shrink-0 sticky top-0 z-10 shadow-sm">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-[#10b981] to-[#0ea5e9] rounded-xl flex items-center justify-center shadow-lg shadow-[#10b981]/20">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#10b981] to-[#0ea5e9] rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
               <Video size={20} className="text-white" />
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight">My Videos</h1>
-              <p className="text-[#8b8d98] text-xs font-medium">Manage and view your compiled content</p>
+              <p className="text-muted text-xs font-medium">Manage and view your compiled content</p>
             </div>
           </div>
         </div>
@@ -82,17 +82,17 @@ export function MyVideosView() {
           </div>
 
           {videos.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-[#2e3039] rounded-2xl bg-[#1a1c23]/50">
+            <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-border rounded-2xl bg-surface/50">
               <Film size={48} className="text-[#4b4d58] mb-4" />
               <h3 className="text-xl font-bold mb-2">No videos yet</h3>
-              <p className="text-[#8b8d98]">Go to the Content Wizard to create your first video!</p>
+              <p className="text-muted">Go to the Content Wizard to create your first video!</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {videos.map((video) => (
-                <div key={video.id} className="bg-[#1a1c23] border border-[#2e3039] rounded-2xl overflow-hidden shadow-lg group hover:border-[#4b4d58] transition-all flex flex-col">
+                <div key={video.id} className="bg-surface border border-border rounded-2xl overflow-hidden shadow-lg group hover:border-border-subtle transition-all flex flex-col">
                   {/* Thumbnail Container */}
-                  <div className={`relative bg-[#0f1014] overflow-hidden ${video.format === '9:16' ? 'aspect-[9/16]' : video.format === '16:9' ? 'aspect-video' : 'aspect-square'}`}>
+                  <div className={`relative bg-bg overflow-hidden ${video.format === '9:16' ? 'aspect-[9/16]' : video.format === '16:9' ? 'aspect-video' : 'aspect-square'}`}>
                     <img 
                       src={video.thumbnail} 
                       alt={video.title} 
@@ -102,7 +102,7 @@ export function MyVideosView() {
                     {/* Status Badge */}
                     <div className="absolute top-3 right-3 flex items-center space-x-2">
                       {video.status === 'ready' ? (
-                        <div className="bg-[#10b981]/90 backdrop-blur text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md flex items-center shadow-lg">
+                        <div className="bg-primary/90 backdrop-blur text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md flex items-center shadow-lg">
                           <CheckCircle2 size={12} className="mr-1" /> Ready
                         </div>
                       ) : (
@@ -133,16 +133,16 @@ export function MyVideosView() {
                   {/* Card Details & Actions */}
                   <div className="p-4 flex flex-col flex-1">
                     <h3 className="font-bold text-white mb-1 truncate" title={video.title}>{video.title}</h3>
-                    <p className="text-[#8b8d98] text-xs font-medium mb-4">{video.date}</p>
+                    <p className="text-muted text-xs font-medium mb-4">{video.date}</p>
                     
-                    <div className="flex justify-between items-center mt-auto pt-4 border-t border-[#2e3039]">
+                    <div className="flex justify-between items-center mt-auto pt-4 border-t border-border">
                       <button 
                         onClick={() => handlePlay(video)}
-                        className="text-sm font-bold text-white flex items-center hover:text-[#10b981] transition-colors"
+                        className="text-sm font-bold text-white flex items-center hover:text-primary transition-colors"
                       >
                         <Play size={14} className="mr-1.5" /> View
                       </button>
-                      <div className="flex items-center space-x-3 text-[#8b8d98]">
+                      <div className="flex items-center space-x-3 text-muted">
                         <button className="hover:text-white transition-colors" title="Download">
                           <Download size={16} />
                         </button>

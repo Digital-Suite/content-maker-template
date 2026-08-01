@@ -1,15 +1,7 @@
+@import '@digital-suite/ui-kit/theme.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-:root {
-  --color-bg: #0f1014;
-  --color-surface: #1a1c23;
-  --color-border: #2e3039;
-  --color-text: #e2e4e9;
-  --color-text-muted: #8b8d98;
-  --color-primary: #10b981;
-}
 
 body {
   background-color: var(--color-bg);
