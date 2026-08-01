@@ -143,7 +143,7 @@ export function MyVideosView() {
                         <Play size={14} className="mr-1.5" /> View
                       </button>
                       <div className="flex items-center space-x-3 text-muted">
-                        <button className="hover:text-white transition-colors" title="Download">
+                        <button className="hover:text-text transition-colors" title="Download">
                           <Download size={16} />
                         </button>
                         <button 
