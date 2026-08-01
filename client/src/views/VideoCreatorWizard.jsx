@@ -1,0 +1,798 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Film, Lightbulb, Type, Mic, Music, Play, CheckCircle2, ChevronRight, Wand2, ImageIcon, LayoutTemplate, Eye, Clock, Plus, Trash2, GripVertical, MousePointerClick, Link, Video, UploadCloud, User } from 'lucide-react';
+
+const STEPS = [
+  { id: 1, title: 'Idea', icon: Lightbulb },
+  { id: 2, title: 'Action', icon: MousePointerClick },
+  { id: 3, title: 'Script', icon: Type },
+  { id: 4, title: 'Visuals', icon: ImageIcon },
+  { id: 5, title: 'Audio', icon: Mic },
+  { id: 6, title: 'Review', icon: CheckCircle2 }
+];
+
+const CAPTION_TEMPLATES = [
+  { id: 'tiktok_bold', name: 'TikTok Bold (Center)' },
+  { id: 'cinematic_subtitle', name: 'Cinematic Subtitle (Bottom)' },
+  { id: 'news_ticker', name: 'News Ticker (Bottom Scroll)' },
+  { id: 'none', name: 'No Caption' }
+];
+
+const MOCK_IDEAS = [
+  {
+    id: 'idea-1',
+    title: 'The Curiosity Hook',
+    description: 'Hooks the viewer by highlighting a common pain point they struggle with, then revealing a counter-intuitive solution that positions you as the expert.',
+    draft_script: 'Are you still struggling with [Pain Point]? You are probably doing it the hard way. Here is the exact framework we use to solve it effortlessly...'
+  },
+  {
+    id: 'idea-2',
+    title: 'Behind the Scenes Value',
+    description: 'Builds trust and draws ideal clients in by showing the transparent, step-by-step process of how you achieve results.',
+    draft_script: 'Want to know exactly how we get results for our clients? Come behind the scenes with me. Step one...'
+  },
+  {
+    id: 'idea-3',
+    title: 'The Myth Buster',
+    description: 'Polarizing content that challenges an industry norm, automatically attracting people who align with your unique approach.',
+    draft_script: 'Stop believing the lie that you need [Industry Norm]. Let me tell you why that is holding you back, and what you should do instead.'
+  }
+];
+
+const MOCK_AV_SCRIPT = [
+  {
+    id: 'scene-1',
+    duration: '2.5s',
+    visualConcept: 'Fast zoom into a person looking frustrated at their laptop screen.',
+    voiceover: 'Are you still struggling with lead generation?'
+  },
+  {
+    id: 'scene-2',
+    duration: '2.8s',
+    visualConcept: 'Split screen: Left side shows a messy desk, right side shows a clean dashboard.',
+    voiceover: 'You are doing it the hard way. Stop wasting time.'
+  },
+  {
+    id: 'scene-3',
+    duration: '2.2s',
+    visualConcept: 'User confidently clicking a button on the Digital Suite app, green checkmark pops up.',
+    voiceover: 'Here is the exact framework we use to solve it effortlessly.'
+  }
+];
+
+const MOCK_SCENES = [
+  {
+    id: 1,
+    image: 'https://images.unsplash.com/photo-1493612276216-ee3925520721?auto=format&fit=crop&q=80&w=400',
+    caption: 'FRUSTRATED?',
+    templateId: 'tiktok_bold',
+    voiceover: 'Are you still struggling with lead generation?',
+    duration: '2.5s'
+  },
+  {
+    id: 2,
+    image: 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?auto=format&fit=crop&q=80&w=400',
+    caption: 'THE HARD WAY',
+    templateId: 'cinematic_subtitle',
+    voiceover: 'You are doing it the hard way. Stop wasting time.',
+    duration: '2.8s'
+  },
+  {
+    id: 3,
+    image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=400',
+    caption: 'THE SOLUTION',
+    templateId: 'tiktok_bold',
+    voiceover: 'Here is the exact framework we use to solve it effortlessly.',
+    duration: '2.2s'
+  }
+];
+
+const MOCK_VOICES = [
+  { id: 'v-1', name: 'Jarvis', description: 'Dry wit, composed British AI assistant' },
+  { id: 'v-2', name: 'Morgan Freeman', description: 'Rich, warm baritone with gravitas and calm authority' },
+  { id: 'v-3', name: 'Zendaya', description: 'Relaxed, modern delivery with effortless cool' },
+];
+
+export function VideoCreatorWizard() {
+  const navigate = useNavigate();
+  const [currentStep, setCurrentStep] = useState(1);
+  const [topic, setTopic] = useState('');
+  const [isGeneratingIdeas, setIsGeneratingIdeas] = useState(false);
+  const [ideas, setIdeas] = useState([]);
+  
+  const [script, setScript] = useState('');
+  const [avScript, setAvScript] = useState([]);
+  
+  const [scenes, setScenes] = useState(MOCK_SCENES);
+  const [musicVibe, setMusicVibe] = useState('ambient');
+  const [aspectRatio, setAspectRatio] = useState('9:16');
+  
+  const [ctaType, setCtaType] = useState('comment');
+  const [ctaKeyword, setCtaKeyword] = useState('');
+  
+  const [voices, setVoices] = useState(() => {
+    const saved = localStorage.getItem('digital_suite_voices');
+    return saved ? JSON.parse(saved) : MOCK_VOICES;
+  });
+  const [selectedVoice, setSelectedVoice] = useState('v-1');
+  const [isCloneModalOpen, setIsCloneModalOpen] = useState(false);
+  const [cloneName, setCloneName] = useState('');
+  const [isCloning, setIsCloning] = useState(false);
+  const [playingVoice, setPlayingVoice] = useState(null);
+  
+  const [postDescription, setPostDescription] = useState('Struggling to get leads? 🛑 You might be doing it the hard way.\n\nWe spent years figuring out the exact framework to automate lead generation so you don\'t have to waste time on manual outreach. Check out how we do it effortlessly!\n\n👇 Comment "SYSTEM" below and I will DM you the exact framework for free!');
+  
+  const [isCompiling, setIsCompiling] = useState(false);
+
+  const handleGenerateIdeas = () => {
+    if (!topic.trim()) return;
+    setIsGeneratingIdeas(true);
+    setTimeout(() => {
+      setIdeas(MOCK_IDEAS);
+      setIsGeneratingIdeas(false);
+    }, 1500);
+  };
+
+  const selectIdea = (idea) => {
+    setScript(idea.draft_script);
+    setAvScript(MOCK_AV_SCRIPT);
+    setCurrentStep(2);
+  };
+
+  const updateSceneTemplate = (id, templateId) => {
+    setScenes(scenes.map(s => s.id === id ? { ...s, templateId } : s));
+  };
+
+  const handleCompile = () => {
+    setIsCompiling(true);
+    setTimeout(() => {
+      setIsCompiling(false);
+      setCurrentStep(7);
+    }, 2000);
+  };
+
+  const handleCloneVoice = () => {
+    if (!cloneName.trim()) return;
+    setIsCloning(true);
+    setTimeout(() => {
+      const newVoice = {
+        id: `v-custom-${Date.now()}`,
+        name: cloneName,
+        description: 'Your cloned custom voice'
+      };
+      const updatedVoices = [newVoice, ...voices];
+      setVoices(updatedVoices);
+      localStorage.setItem('digital_suite_voices', JSON.stringify(updatedVoices));
+      setSelectedVoice(newVoice.id);
+      setIsCloning(false);
+      setIsCloneModalOpen(false);
+      setCloneName('');
+    }, 2000);
+  };
+
+  const handlePlaySample = (voiceId, e) => {
+    e.stopPropagation();
+    setPlayingVoice(voiceId);
+    setTimeout(() => {
+      setPlayingVoice((current) => current === voiceId ? null : current);
+    }, 3000);
+  };
+
+  return (
+    <div className="h-full flex flex-col bg-[#0f1014] text-white">
+      {/* Stepper Header */}
+      <div className="bg-[#1a1c23]/90 backdrop-blur-md border-b border-[#2e3039] p-6 shrink-0 relative z-20 shadow-sm sticky top-0">
+        <div className="max-w-5xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#10b981] to-[#0ea5e9] rounded-xl flex items-center justify-center shadow-lg shadow-[#10b981]/20">
+              <Film size={20} className="text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight">Content Wizard</h1>
+              <p className="text-[#8b8d98] text-xs font-medium">6-Step Automated Process</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-2 overflow-x-auto pb-2 md:pb-0 custom-scrollbar">
+            {STEPS.map((step, index) => {
+              const Icon = step.icon;
+              const isActive = currentStep === step.id;
+              const isPast = currentStep > step.id;
+              
+              return (
+                <div key={step.id} className="flex items-center">
+                  <div className={`flex items-center px-3 py-1.5 rounded-lg border text-sm font-medium transition-all ${
+                    isActive 
+                      ? 'bg-[#10b981]/10 border-[#10b981] text-[#10b981]' 
+                      : isPast 
+                        ? 'bg-[#2e3039] border-[#2e3039] text-white' 
+                        : 'bg-transparent border-[#2e3039] text-[#8b8d98]'
+                  }`}>
+                    <Icon size={16} className={`mr-2 ${isActive ? 'animate-pulse' : ''}`} />
+                    {step.title}
+                  </div>
+                  {index < STEPS.length - 1 && (
+                    <ChevronRight size={16} className="text-[#2e3039] mx-2 shrink-0" />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-y-auto p-8 relative">
+        <div className="max-w-4xl mx-auto h-full flex flex-col">
+
+          {/* STEP 1: IDEATION */}
+          {currentStep === 1 && (
+            <div className="flex-1 flex flex-col justify-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="text-center mb-10">
+                <h2 className="text-3xl font-bold mb-3">Let's brainstorm some ideas.</h2>
+                <p className="text-[#8b8d98] max-w-lg mx-auto">
+                  Type a broad topic, keyword, or pain point below. The AI will generate tailored concepts to help you figure out what your video should be about.
+                </p>
+              </div>
+              
+              <div className="bg-[#1a1c23] border border-[#2e3039] p-2 rounded-2xl flex items-center shadow-lg mx-auto w-full max-w-2xl relative">
+                <input 
+                  type="text" 
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder="e.g. Lead generation strategies..."
+                  className="flex-1 bg-transparent border-none px-4 py-3 focus:outline-none text-lg placeholder:text-[#4b4d58]"
+                  onKeyDown={(e) => e.key === 'Enter' && handleGenerateIdeas()}
+                />
+                <button 
+                  onClick={handleGenerateIdeas}
+                  disabled={isGeneratingIdeas || !topic.trim()}
+                  className="bg-[#10b981] hover:bg-[#0ea5e9] text-white px-6 py-3 rounded-xl font-medium transition-colors flex items-center shadow-lg shadow-[#10b981]/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isGeneratingIdeas ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin mr-2" /> : <Wand2 size={18} className="mr-2" />}
+                  Generate Ideas
+                </button>
+              </div>
+
+              <div className="flex justify-center mt-4">
+                <div className="flex items-center text-sm">
+                  <span className="text-[#8b8d98] mr-3 font-medium">Video Format:</span>
+                  <select 
+                    value={aspectRatio}
+                    onChange={(e) => setAspectRatio(e.target.value)}
+                    className="bg-[#1a1c23] border border-[#2e3039] rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-[#10b981] appearance-none cursor-pointer hover:border-[#4b4d58] transition-colors"
+                  >
+                    <option value="9:16">9:16 (Vertical) - TikTok / Reels</option>
+                    <option value="16:9">16:9 (Horizontal) - YouTube</option>
+                    <option value="1:1">1:1 (Square) - Feed</option>
+                  </select>
+                </div>
+              </div>
+
+              {ideas.length > 0 && (
+                <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                  {ideas.map((idea, i) => (
+                    <button 
+                      key={idea.id}
+                      onClick={() => selectIdea(idea)}
+                      className="bg-[#1a1c23] border border-[#2e3039] p-6 rounded-2xl text-left hover:border-[#10b981] hover:shadow-[0_0_20px_rgba(16,185,129,0.1)] transition-all group flex flex-col"
+                      style={{ animationDelay: `${i * 100}ms` }}
+                    >
+                      <h3 className="font-bold text-lg mb-2 group-hover:text-[#10b981] transition-colors">{idea.title}</h3>
+                      <p className="text-[#8b8d98] text-sm leading-relaxed mb-4 flex-1">{idea.description}</p>
+                      <div className="text-xs text-[#10b981] font-medium flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        Draft Script <ChevronRight size={14} className="ml-1" />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* STEP 2: ACTION */}
+          {currentStep === 2 && (
+            <div className="animate-in fade-in slide-in-from-right-8 duration-500 h-full flex flex-col justify-center max-w-2xl mx-auto w-full">
+              <div className="text-center mb-10">
+                <h2 className="text-3xl font-bold mb-3">How do you want viewers to take action?</h2>
+                <p className="text-[#8b8d98] max-w-lg mx-auto">
+                  Defining your Call-To-Action (CTA) upfront allows the AI to perfectly integrate it into the video script and post description.
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div 
+                  onClick={() => setCtaType('comment')}
+                  className={`border-2 p-6 rounded-2xl cursor-pointer transition-all ${ctaType === 'comment' ? 'bg-[#10b981]/10 border-[#10b981]' : 'bg-[#1a1c23] border-[#2e3039] hover:border-[#4b4d58]'}`}
+                >
+                  <div className="flex items-center mb-3">
+                    <Type size={24} className={ctaType === 'comment' ? 'text-[#10b981]' : 'text-[#8b8d98]'} />
+                    <span className="ml-3 font-bold">Comment Keyword</span>
+                    <span className="ml-auto text-[10px] font-bold uppercase tracking-wider bg-[#10b981]/20 text-[#10b981] px-2 py-0.5 rounded">Recommended</span>
+                  </div>
+                  <p className="text-[#8b8d98] text-sm leading-relaxed mb-4">Ask viewers to comment a specific word. Perfect for triggering DM automations.</p>
+                  
+                  {ctaType === 'comment' && (
+                    <div className="animate-in fade-in zoom-in-95 duration-200">
+                      <label className="text-xs font-semibold text-[#10b981] uppercase tracking-wider mb-2 block">Keyword to Comment:</label>
+                      <input 
+                        type="text"
+                        value={ctaKeyword}
+                        onChange={(e) => setCtaKeyword(e.target.value)}
+                        placeholder="e.g. SYSTEM"
+                        className="w-full bg-[#0f1014] border border-[#10b981]/30 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#10b981] uppercase font-bold"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div 
+                  onClick={() => setCtaType('link')}
+                  className={`border-2 p-6 rounded-2xl cursor-pointer transition-all ${ctaType === 'link' ? 'bg-[#10b981]/10 border-[#10b981]' : 'bg-[#1a1c23] border-[#2e3039] hover:border-[#4b4d58]'}`}
+                >
+                  <div className="flex items-center mb-3">
+                    <Link size={24} className={ctaType === 'link' ? 'text-[#10b981]' : 'text-[#8b8d98]'} />
+                    <span className="ml-3 font-bold">Link in Bio</span>
+                  </div>
+                  <p className="text-[#8b8d98] text-sm leading-relaxed">Direct traffic to your profile link or video description. Standard approach.</p>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center mt-auto md:mt-8 shrink-0">
+                <button onClick={() => setCurrentStep(1)} className="text-[#8b8d98] hover:text-white px-4 py-2 font-medium transition-colors">Back</button>
+                <button 
+                  onClick={() => setCurrentStep(3)}
+                  disabled={ctaType === 'comment' && !ctaKeyword.trim()}
+                  className="bg-[#10b981] hover:bg-[#0ea5e9] text-white px-8 py-3 rounded-xl font-medium transition-colors flex items-center shadow-lg shadow-[#10b981]/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Generate Script <ChevronRight size={18} className="ml-2" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3: SCRIPT */}
+          {currentStep === 3 && (
+            <div className="animate-in fade-in slide-in-from-right-8 duration-500 h-full flex flex-col">
+              <div className="mb-6 flex justify-between items-end">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Script Editor</h2>
+                  <p className="text-[#8b8d98] text-sm">The AI has structured your idea into visual scenes and dialogue. Tweak it before generating images.</p>
+                </div>
+                <div className="flex items-center text-sm bg-[#1a1c23] border border-[#2e3039] px-4 py-2 rounded-xl shadow-sm">
+                  <span className="text-[#8b8d98] mr-2">Total Duration:</span>
+                  <span className="text-white font-bold flex items-center">
+                    <Clock size={14} className="mr-1.5 text-blue-400" />
+                    {avScript.reduce((acc, scene) => acc + parseFloat(scene.duration || 0), 0).toFixed(1)}s
+                  </span>
+                </div>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6">
+                {avScript.map((scene, index) => (
+                  <div key={scene.id} className="bg-[#1a1c23] border border-[#2e3039] rounded-2xl overflow-hidden shadow-lg group hover:border-[#4b4d58] transition-colors flex flex-col">
+                    {/* Scene Header */}
+                    <div className="bg-[#2e3039]/40 px-5 py-3 flex justify-between items-center border-b border-[#2e3039]">
+                      <div className="flex items-center space-x-3">
+                        <GripVertical size={16} className="text-[#4b4d58] group-hover:text-[#8b8d98] cursor-grab transition-colors" />
+                        <span className="text-white font-bold tracking-wide">Scene {index + 1}</span>
+                      </div>
+                      <div className="flex items-center space-x-4 text-[#8b8d98]">
+                        <div className="flex items-center text-xs bg-[#0f1014] px-2.5 py-1 rounded-md border border-[#2e3039] font-medium">
+                          <Clock size={12} className="mr-1.5 text-blue-400" />
+                          {scene.duration}
+                        </div>
+                        <button className="hover:text-red-400 transition-colors" title="Delete Scene"><Trash2 size={16} /></button>
+                      </div>
+                    </div>
+
+                    {/* Split Pane */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#2e3039]">
+                      {/* Left: Visuals */}
+                      <div className="p-5 flex flex-col">
+                        <label className="text-xs text-[#8b8d98] flex items-center mb-3 font-semibold uppercase tracking-wider">
+                          <Eye size={14} className="mr-2 text-[#10b981]"/> Visual Concept
+                        </label>
+                        <textarea 
+                          defaultValue={scene.visualConcept}
+                          className="flex-1 w-full bg-[#0f1014]/50 border border-[#2e3039] rounded-xl p-3 text-sm text-[#e2e4e9] focus:outline-none focus:border-[#10b981] focus:bg-[#0f1014] resize-none min-h-[100px] leading-relaxed transition-colors shadow-inner" 
+                          placeholder="Describe what happens on screen..."
+                        />
+                      </div>
+                      
+                      {/* Right: Audio */}
+                      <div className="p-5 flex flex-col">
+                        <label className="text-xs text-[#8b8d98] flex items-center mb-3 font-semibold uppercase tracking-wider">
+                          <Mic size={14} className="mr-2 text-purple-400"/> Voiceover / Dialogue
+                        </label>
+                        <textarea 
+                          defaultValue={scene.voiceover}
+                          className="flex-1 w-full bg-[#0f1014]/50 border border-[#2e3039] rounded-xl p-3 text-sm text-[#e2e4e9] focus:outline-none focus:border-purple-400 focus:bg-[#0f1014] resize-none min-h-[100px] leading-relaxed transition-colors shadow-inner" 
+                          placeholder="What is spoken during this scene?"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                <button className="w-full border-2 border-dashed border-[#2e3039] rounded-2xl p-4 flex flex-col items-center justify-center text-[#8b8d98] hover:text-white hover:border-[#8b8d98] hover:bg-[#1a1c23] transition-all group mt-6">
+                  <Plus size={20} className="mb-1 group-hover:scale-110 transition-transform" />
+                  <span className="text-sm font-medium">Add Scene</span>
+                </button>
+              </div>
+              
+              <div className="mt-6 pt-6 border-t border-[#2e3039] flex justify-between items-center shrink-0">
+                <button onClick={() => setCurrentStep(2)} className="text-[#8b8d98] hover:text-white px-4 py-2 font-medium transition-colors">Back</button>
+                <button 
+                  onClick={() => setCurrentStep(4)}
+                  className="bg-[#10b981] hover:bg-[#0ea5e9] text-white px-8 py-3 rounded-xl font-medium transition-colors flex items-center shadow-lg shadow-[#10b981]/20"
+                >
+                  Generate Visual Assets <ChevronRight size={18} className="ml-2" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 4: VISUALS */}
+          {currentStep === 4 && (
+            <div className="animate-in fade-in slide-in-from-right-8 duration-500 h-full flex flex-col">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold mb-2">Storyboard & Visuals</h2>
+                <p className="text-[#8b8d98] text-sm">Review the AI-generated scenes, tweak prompts, and select Caption Templates.</p>
+              </div>
+              
+              <div className={`flex-1 grid grid-cols-1 ${aspectRatio === '16:9' ? 'md:grid-cols-2' : 'md:grid-cols-3'} gap-6 overflow-y-auto pr-2 custom-scrollbar pb-10`}>
+                {scenes.map((scene, index) => (
+                  <div key={scene.id} className="bg-[#1a1c23] border border-[#2e3039] rounded-2xl overflow-hidden shadow-lg flex flex-col h-fit">
+                    <div className="bg-[#2e3039]/50 px-4 py-2.5 flex justify-between items-center border-b border-[#2e3039]">
+                      <span className="text-white font-medium text-sm">Scene {index + 1}</span>
+                      <span className="text-xs bg-[#0f1014] text-[#8b8d98] px-2 py-0.5 rounded border border-[#2e3039]">{scene.duration}</span>
+                    </div>
+
+                    <div className={`relative bg-[#0f1014] group ${aspectRatio === '9:16' ? 'aspect-[9/16]' : aspectRatio === '1:1' ? 'aspect-square' : 'aspect-video'}`}>
+                      <img src={scene.image} alt={`Scene ${index + 1}`} className="w-full h-full object-cover opacity-80" />
+                      
+                      {/* Caption Overlay Preview */}
+                      <div className="absolute inset-0 flex flex-col justify-center p-6 pointer-events-none">
+                        <h1 className={`text-white text-center uppercase tracking-tight ${
+                          scene.templateId === 'tiktok_bold' ? 'text-2xl font-black drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]' : 
+                          scene.templateId === 'cinematic_subtitle' ? 'text-lg font-serif italic mt-auto drop-shadow-md' : 'hidden'
+                        }`}>
+                          {scene.caption}
+                        </h1>
+                      </div>
+                      
+                      {/* Hover Actions */}
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-auto">
+                        <button className="bg-white/10 hover:bg-white/20 backdrop-blur text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-white/10">
+                          Edit Image Prompt
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="p-5 flex flex-col space-y-4">
+                      <div>
+                        <label className="text-xs text-[#8b8d98] flex items-center mb-1.5 font-medium uppercase tracking-wider">
+                          <LayoutTemplate size={12} className="mr-1.5 text-[#10b981]"/> Caption Template
+                        </label>
+                        <select 
+                          value={scene.templateId}
+                          onChange={(e) => updateSceneTemplate(scene.id, e.target.value)}
+                          className="w-full bg-[#0f1014] border border-[#2e3039] rounded p-2 text-sm text-white focus:outline-none focus:border-[#10b981] appearance-none"
+                        >
+                          {CAPTION_TEMPLATES.map(t => (
+                            <option key={t.id} value={t.id}>{t.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs text-[#8b8d98] flex items-center mb-1.5 font-medium uppercase tracking-wider">
+                          <Type size={12} className="mr-1.5 text-blue-400"/> Caption Text
+                        </label>
+                        <input type="text" defaultValue={scene.caption} className="w-full bg-[#0f1014] border border-[#2e3039] rounded p-2 text-sm text-white focus:outline-none focus:border-[#10b981]" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-[#2e3039] flex justify-between items-center shrink-0">
+                <button onClick={() => setCurrentStep(3)} className="text-[#8b8d98] hover:text-white px-4 py-2 font-medium transition-colors">Back</button>
+                <button 
+                  onClick={() => setCurrentStep(5)}
+                  className="bg-[#10b981] hover:bg-[#0ea5e9] text-white px-8 py-3 rounded-xl font-medium transition-colors flex items-center shadow-lg shadow-[#10b981]/20"
+                >
+                  Configure Audio <ChevronRight size={18} className="ml-2" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 5: AUDIO */}
+          {currentStep === 5 && (
+            <div className="animate-in fade-in slide-in-from-right-8 duration-500 h-full flex flex-col">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold mb-2">Audio & Voice</h2>
+                <p className="text-[#8b8d98] text-sm">Review voiceover scripts and set the background music vibe.</p>
+              </div>
+              
+              <div className="flex-1 space-y-6 overflow-y-auto pr-2 custom-scrollbar">
+                {/* AI Voice Actor */}
+                <div className="bg-[#1a1c23] border border-[#2e3039] rounded-2xl p-6 shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold flex items-center">
+                      <User className="text-[#0ea5e9] mr-2" size={20}/> Select a Voice
+                    </h3>
+                    <button 
+                      onClick={() => setIsCloneModalOpen(true)}
+                      className="bg-[#10b981]/10 text-[#10b981] hover:bg-[#10b981]/20 border border-[#10b981]/20 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors flex items-center"
+                    >
+                      <Plus size={16} className="mr-1" /> Clone New Voice
+                    </button>
+                  </div>
+                  
+                  <div className="flex gap-3 overflow-x-auto pb-4 custom-scrollbar">
+                    {voices.map(voice => (
+                      <div key={voice.id} className="flex flex-col gap-3 shrink-0">
+                        {/* Voice Card */}
+                        <div 
+                          onClick={() => setSelectedVoice(voice.id)}
+                          className={`w-[200px] h-full rounded-xl border-2 p-4 cursor-pointer transition-all ${
+                            selectedVoice === voice.id 
+                              ? 'border-[#10b981] bg-[#10b981]/5 shadow-md shadow-[#10b981]/10' 
+                              : 'border-[#2e3039] bg-[#0f1014] hover:border-[#4b4d58]'
+                          }`}
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-bold text-sm line-clamp-1">{voice.name}</h4>
+                            {selectedVoice === voice.id && <CheckCircle2 size={16} className="text-[#10b981] ml-2 shrink-0" />}
+                          </div>
+                          <p className="text-xs text-[#8b8d98] line-clamp-2 leading-relaxed">{voice.description}</p>
+                        </div>
+                        
+                        {/* Play Sample Button (Outside Card) */}
+                        <button 
+                          onClick={(e) => handlePlaySample(voice.id, e)}
+                          className={`flex items-center justify-center py-2 px-3 rounded-lg border text-xs font-bold uppercase transition-all ${
+                            playingVoice === voice.id
+                              ? 'border-[#10b981]/30 bg-[#10b981]/10 text-[#10b981]'
+                              : 'border-[#2e3039] bg-[#1a1c23] text-[#8b8d98] hover:border-[#4b4d58] hover:text-white'
+                          }`}
+                        >
+                          {playingVoice === voice.id ? (
+                            <div className="flex items-center space-x-1 h-3">
+                              <div className="w-1 h-2 bg-[#10b981] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                              <div className="w-1 h-3 bg-[#10b981] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                              <div className="w-1 h-2 bg-[#10b981] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                              <div className="w-1 h-1 bg-[#10b981] rounded-full animate-bounce" style={{ animationDelay: '450ms' }}></div>
+                              <span className="ml-2">Playing...</span>
+                            </div>
+                          ) : (
+                            <>
+                              <Play size={12} className="mr-1.5" fill="currentColor" /> Play Sample
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-[#1a1c23] border border-[#2e3039] rounded-2xl p-6 shadow-sm">
+                  <h3 className="text-lg font-bold mb-4 flex items-center"><Mic className="text-purple-400 mr-2" size={20}/> Voiceover Scripts</h3>
+                  <div className="space-y-4">
+                    {scenes.map((scene, i) => (
+                      <div key={scene.id} className="flex space-x-4">
+                        <div className="w-8 h-8 rounded-full bg-[#2e3039] flex items-center justify-center shrink-0 text-sm font-medium">{i+1}</div>
+                        <div className="flex-1">
+                          <textarea 
+                            defaultValue={scene.voiceover} 
+                            className="w-full bg-[#0f1014] border border-[#2e3039] rounded-xl p-3 text-sm text-white focus:outline-none focus:border-purple-400 resize-none h-20" 
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-[#1a1c23] border border-[#2e3039] rounded-2xl p-6 shadow-sm">
+                  <h3 className="text-lg font-bold mb-4 flex items-center"><Music className="text-blue-400 mr-2" size={20}/> Background Music</h3>
+                  <div>
+                    <label className="text-xs text-[#8b8d98] block mb-2 font-medium uppercase tracking-wider">Music Vibe / Genre</label>
+                    <select 
+                      value={musicVibe}
+                      onChange={(e) => setMusicVibe(e.target.value)}
+                      className="w-full md:w-1/2 bg-[#0f1014] border border-[#2e3039] rounded-xl p-3 text-sm text-white focus:outline-none focus:border-blue-400 appearance-none"
+                    >
+                      <option value="ambient">Ambient & Atmospheric</option>
+                      <option value="cinematic">Cinematic Epic</option>
+                      <option value="upbeat">Upbeat & Energetic</option>
+                      <option value="lofi">Lo-Fi Chill</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-[#2e3039] flex justify-between items-center shrink-0">
+                <button onClick={() => setCurrentStep(4)} className="text-[#8b8d98] hover:text-white px-4 py-2 font-medium transition-colors">Back</button>
+                <button 
+                  onClick={() => setCurrentStep(6)}
+                  className="bg-[#10b981] hover:bg-[#0ea5e9] text-white px-8 py-3 rounded-xl font-medium transition-colors flex items-center shadow-lg shadow-[#10b981]/20"
+                >
+                  Final Review <ChevronRight size={18} className="ml-2" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 6: REVIEW */}
+          {currentStep === 6 && (
+            <div className="animate-in fade-in slide-in-from-right-8 duration-500 h-full flex flex-col max-w-4xl mx-auto w-full">
+              <div className="text-center mb-8 shrink-0">
+                <div className="w-16 h-16 bg-gradient-to-br from-[#10b981] to-[#0ea5e9] rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl shadow-[#10b981]/20">
+                  <CheckCircle2 size={32} className="text-white" />
+                </div>
+                <h2 className="text-3xl font-bold mb-2">Ready to Compile</h2>
+                <p className="text-[#8b8d98]">All assets have been configured. Review the final details.</p>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6">
+                <div className="bg-[#1a1c23] border border-[#2e3039] rounded-2xl p-6 shadow-lg flex flex-col md:flex-row gap-6">
+                  <div className="flex-1">
+                    <h3 className="text-[#8b8d98] font-medium text-sm mb-4 uppercase tracking-wider">Video Summary</h3>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center border-b border-[#2e3039] pb-3">
+                        <span className="text-[#8b8d98]">Total Scenes</span>
+                        <span className="text-white font-bold">{scenes.length}</span>
+                      </div>
+                      <div className="flex justify-between items-center border-b border-[#2e3039] pb-3">
+                        <span className="text-[#8b8d98]">Total Duration</span>
+                        <span className="text-white font-bold">
+                          {avScript.reduce((acc, scene) => acc + parseFloat(scene.duration || 0), 0).toFixed(1)} Seconds
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[#8b8d98]">Music Vibe</span>
+                        <span className="text-white font-bold capitalize">{musicVibe}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-[#1a1c23] border border-[#2e3039] rounded-2xl p-6 shadow-lg">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-[#10b981] font-medium text-sm uppercase tracking-wider flex items-center">
+                      <Type size={16} className="mr-2" /> Generated Post Description & CTA
+                    </h3>
+                    <button className="text-xs bg-[#10b981]/10 text-[#10b981] hover:bg-[#10b981]/20 px-3 py-1.5 rounded-lg font-semibold transition-colors flex items-center border border-[#10b981]/20">
+                      <Wand2 size={12} className="mr-1.5" /> Optimize for Platforms
+                    </button>
+                  </div>
+                  <p className="text-[#8b8d98] text-sm mb-4">
+                    The AI generated this highly-engaging caption to accompany your video. It includes a specific CTA word for your automated DM replies.
+                  </p>
+                  <textarea 
+                    value={postDescription}
+                    onChange={(e) => setPostDescription(e.target.value)}
+                    className="w-full bg-[#0f1014] border border-[#2e3039] rounded-xl p-4 text-sm text-[#e2e4e9] focus:outline-none focus:border-[#10b981] resize-none h-40 leading-relaxed shadow-inner" 
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center mt-6 pt-6 border-t border-[#2e3039] shrink-0">
+                <button onClick={() => setCurrentStep(5)} className="text-[#8b8d98] hover:text-white px-4 py-2 font-medium transition-colors">Back</button>
+                <button 
+                  onClick={handleCompile}
+                  disabled={isCompiling}
+                  className={`px-10 py-4 rounded-xl font-bold flex items-center transition-all shadow-lg text-lg ${
+                    isCompiling ? 'bg-[#2e3039] text-[#8b8d98] cursor-not-allowed shadow-none' : 'bg-[#10b981] hover:bg-[#0ea5e9] text-white shadow-[#10b981]/30'
+                  }`}
+                >
+                  {isCompiling ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin mr-3" />
+                      Compiling...
+                    </>
+                  ) : (
+                    <>
+                      <Play size={20} className="mr-3" fill="currentColor" />
+                      Compile Final Video
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 7: SUCCESS */}
+          {currentStep === 7 && (
+            <div className="animate-in fade-in slide-in-from-bottom-8 duration-500 h-full flex flex-col justify-center max-w-lg mx-auto w-full text-center">
+              <div className="w-24 h-24 bg-gradient-to-br from-[#10b981] to-[#0ea5e9] rounded-full flex items-center justify-center mx-auto mb-8 shadow-xl shadow-[#10b981]/20">
+                <CheckCircle2 size={48} className="text-white" />
+              </div>
+              <h2 className="text-4xl font-bold mb-4">Video Rendering!</h2>
+              <p className="text-[#8b8d98] mb-10 text-lg leading-relaxed">
+                Your video has been successfully sent to the rendering engine. You can monitor its progress in your video library.
+              </p>
+              
+              <button 
+                onClick={() => navigate('/videos')}
+                className="bg-[#1a1c23] border border-[#2e3039] hover:border-[#10b981] text-white px-8 py-4 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center mx-auto w-full text-lg group"
+              >
+                <Video size={24} className="mr-3 text-[#10b981] group-hover:scale-110 transition-transform" />
+                Go to My Videos
+              </button>
+            </div>
+          )}
+
+        </div>
+      </div>
+
+      {/* Voice Clone Modal Overlay */}
+      {isCloneModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#1a1c23] border border-[#2e3039] rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-[#2e3039] flex justify-between items-center">
+              <h3 className="text-xl font-bold">Clone Your Voice</h3>
+              <button 
+                onClick={() => setIsCloneModalOpen(false)}
+                className="text-[#8b8d98] hover:text-white transition-colors p-1"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div>
+                <label className="text-xs text-[#8b8d98] block mb-2 font-medium uppercase tracking-wider">Voice Name</label>
+                <input 
+                  type="text" 
+                  value={cloneName}
+                  onChange={(e) => setCloneName(e.target.value)}
+                  placeholder="e.g. My Podcast Voice"
+                  className="w-full bg-[#0f1014] border border-[#2e3039] rounded-xl p-3 text-sm text-white focus:outline-none focus:border-[#10b981]"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-[#8b8d98] block mb-2 font-medium uppercase tracking-wider">Audio Sample (30s+)</label>
+                <div className="border-2 border-dashed border-[#2e3039] hover:border-[#10b981]/50 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-colors bg-[#0f1014]/50 group">
+                  <div className="w-12 h-12 bg-[#2e3039] group-hover:bg-[#10b981]/20 rounded-full flex items-center justify-center mb-3 transition-colors">
+                    <UploadCloud className="text-[#8b8d98] group-hover:text-[#10b981] transition-colors" size={24} />
+                  </div>
+                  <p className="text-sm font-medium mb-1">Drag and drop audio file</p>
+                  <p className="text-xs text-[#8b8d98]">WAV or MP3, max 10MB. Must be clean audio without background noise.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-[#2e3039] flex justify-end gap-3 bg-[#0f1014]/50">
+              <button 
+                onClick={() => setIsCloneModalOpen(false)}
+                className="px-5 py-2.5 rounded-xl text-sm font-medium text-[#8b8d98] hover:text-white transition-colors"
+                disabled={isCloning}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleCloneVoice}
+                disabled={!cloneName.trim() || isCloning}
+                className="bg-[#10b981] hover:bg-[#0ea5e9] disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg flex items-center"
+              >
+                {isCloning ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin mr-2" />
+                    Cloning Voice...
+                  </>
+                ) : (
+                  'Clone & Use Voice'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}

@@ -3,19 +3,8 @@ import { useDigitalSuite } from '../../hooks/useDigitalSuite';
 import { Sidebar } from './Sidebar';
 
 const APP_NAVIGATION = [
-  
-  
-  { id: 'dashboard', label: 'Dashboard', path: '' },
-  
-  
-  
-  { id: 'image-studio', label: 'Image Studio', path: '/image-studio' },
-  
-  
-  
-  { id: 'storyboard', label: 'Storyboard', path: '/storyboard' },
-  
-  
+  { id: 'create', label: 'Create Video', path: '' },
+  { id: 'videos', label: 'My Videos', path: 'videos' },
 ];
 
 export function AppShell() {
