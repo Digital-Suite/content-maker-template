@@ -109,6 +109,7 @@ export function VideoCreatorWizard() {
   
   const [ctaType, setCtaType] = useState('comment');
   const [ctaKeyword, setCtaKeyword] = useState('');
+  const [ctaLink, setCtaLink] = useState('');
   
   const [voices, setVoices] = useState(() => {
     const saved = localStorage.getItem('digital_suite_voices');
@@ -334,7 +335,20 @@ export function VideoCreatorWizard() {
                     <Link size={24} className={ctaType === 'link' ? 'text-primary' : 'text-muted'} />
                     <span className="ml-3 font-bold">Link in Bio</span>
                   </div>
-                  <p className="text-muted text-sm leading-relaxed">Direct traffic to your profile link or video description. Standard approach.</p>
+                  <p className="text-muted text-sm leading-relaxed mb-4">Direct traffic to your profile link or video description. Standard approach.</p>
+                  
+                  {ctaType === 'link' && (
+                    <div className="animate-in fade-in zoom-in-95 duration-200">
+                      <label className="text-xs font-semibold text-primary uppercase tracking-wider mb-2 block">Link URL:</label>
+                      <input 
+                        type="url"
+                        value={ctaLink}
+                        onChange={(e) => setCtaLink(e.target.value)}
+                        placeholder="e.g. https://digitalsuite.tech"
+                        className="w-full bg-bg border border-primary/30 rounded-xl px-4 py-3 text-text focus:outline-none focus:border-primary font-medium"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -342,7 +356,7 @@ export function VideoCreatorWizard() {
                 <button onClick={() => setCurrentStep(1)} className="text-muted hover:text-text px-4 py-2 font-medium transition-colors">Back</button>
                 <button 
                   onClick={() => setCurrentStep(3)}
-                  disabled={ctaType === 'comment' && !ctaKeyword.trim()}
+                  disabled={(ctaType === 'comment' && !ctaKeyword.trim()) || (ctaType === 'link' && !ctaLink.trim())}
                   className="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-xl font-medium transition-colors flex items-center shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Generate Script <ChevronRight size={18} className="ml-2" />
