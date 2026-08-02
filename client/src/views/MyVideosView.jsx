@@ -50,7 +50,7 @@ export function MyVideosView() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-bg text-white">
+    <div className="h-full flex flex-col bg-bg text-text">
       {/* Header */}
       <div className="bg-surface/90 backdrop-blur-md border-b border-border p-6 shrink-0 sticky top-0 z-10 shadow-sm">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -71,11 +71,11 @@ export function MyVideosView() {
         <div className="max-w-7xl mx-auto">
           
           {/* Storage Warning Banner */}
-          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mb-8 flex items-start space-x-3">
-            <AlertTriangle className="text-yellow-500 shrink-0 mt-0.5" size={20} />
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 mb-8 flex items-start space-x-3">
+            <AlertTriangle className="text-amber-600 shrink-0 mt-0.5" size={20} />
             <div>
-              <h4 className="text-yellow-500 font-bold text-sm">Storage Cost Notice</h4>
-              <p className="text-yellow-500/80 text-sm mt-1 leading-relaxed">
+              <h4 className="text-amber-600 font-bold text-sm">Storage Cost Notice</h4>
+              <p className="text-amber-600/90 text-sm mt-1 leading-relaxed">
                 Rendered videos are stored directly on your own infrastructure. To minimize your hosting and storage costs, we highly recommend downloading your videos and deleting them from this library when you no longer need them.
               </p>
             </div>
@@ -132,13 +132,13 @@ export function MyVideosView() {
 
                   {/* Card Details & Actions */}
                   <div className="p-4 flex flex-col flex-1">
-                    <h3 className="font-bold text-white mb-1 truncate" title={video.title}>{video.title}</h3>
+                    <h3 className="font-bold text-text mb-1 truncate" title={video.title}>{video.title}</h3>
                     <p className="text-muted text-xs font-medium mb-4">{video.date}</p>
                     
                     <div className="flex justify-between items-center mt-auto pt-4 border-t border-border">
                       <button 
                         onClick={() => handlePlay(video)}
-                        className="text-sm font-bold text-white flex items-center hover:text-primary transition-colors"
+                        className="text-sm font-bold text-text flex items-center hover:text-primary transition-colors"
                       >
                         <Play size={14} className="mr-1.5" /> View
                       </button>
