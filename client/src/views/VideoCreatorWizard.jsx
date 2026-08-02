@@ -179,13 +179,13 @@ export function VideoCreatorWizard() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-bg text-white">
+    <div className="h-full flex flex-col bg-bg text-text">
       {/* Stepper Header */}
       <div className="bg-surface/90 backdrop-blur-md border-b border-border p-6 shrink-0 relative z-20 shadow-sm sticky top-0">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-to-br from-[#10b981] to-[#0ea5e9] rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-              <Film size={20} className="text-white" />
+              <Film size={20} className="text-text" />
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight">Content Wizard</h1>
@@ -205,7 +205,7 @@ export function VideoCreatorWizard() {
                     isActive 
                       ? 'bg-primary/10 border-primary text-primary' 
                       : isPast 
-                        ? 'bg-surface-raised border-border text-white' 
+                        ? 'bg-surface-raised border-border text-text' 
                         : 'bg-transparent border-border text-muted'
                   }`}>
                     <Icon size={16} className={`mr-2 ${isActive ? 'animate-pulse' : ''}`} />
@@ -260,7 +260,7 @@ export function VideoCreatorWizard() {
                   <select 
                     value={aspectRatio}
                     onChange={(e) => setAspectRatio(e.target.value)}
-                    className="bg-surface border border-border rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-primary appearance-none cursor-pointer hover:border-border-subtle transition-colors"
+                    className="bg-surface border border-border rounded-lg px-3 py-1.5 text-text focus:outline-none focus:border-primary appearance-none cursor-pointer hover:border-border-subtle transition-colors"
                   >
                     <option value="9:16">9:16 (Vertical) - TikTok / Reels</option>
                     <option value="16:9">16:9 (Horizontal) - YouTube</option>
@@ -320,7 +320,7 @@ export function VideoCreatorWizard() {
                         value={ctaKeyword}
                         onChange={(e) => setCtaKeyword(e.target.value)}
                         placeholder="e.g. SYSTEM"
-                        className="w-full bg-bg border border-primary/30 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary uppercase font-bold"
+                        className="w-full bg-bg border border-primary/30 rounded-xl px-4 py-3 text-text focus:outline-none focus:border-primary uppercase font-bold"
                       />
                     </div>
                   )}
@@ -361,7 +361,7 @@ export function VideoCreatorWizard() {
                 </div>
                 <div className="flex items-center text-sm bg-surface border border-border px-4 py-2 rounded-xl shadow-sm">
                   <span className="text-muted mr-2">Total Duration:</span>
-                  <span className="text-white font-bold flex items-center">
+                  <span className="text-text font-bold flex items-center">
                     <Clock size={14} className="mr-1.5 text-blue-400" />
                     {avScript.reduce((acc, scene) => acc + parseFloat(scene.duration || 0), 0).toFixed(1)}s
                   </span>
@@ -375,7 +375,7 @@ export function VideoCreatorWizard() {
                     <div className="bg-surface-raised/40 px-5 py-3 flex justify-between items-center border-b border-border">
                       <div className="flex items-center space-x-3">
                         <GripVertical size={16} className="text-[#4b4d58] group-hover:text-muted cursor-grab transition-colors" />
-                        <span className="text-white font-bold tracking-wide">Scene {index + 1}</span>
+                        <span className="text-text font-bold tracking-wide">Scene {index + 1}</span>
                       </div>
                       <div className="flex items-center space-x-4 text-muted">
                         <div className="flex items-center text-xs bg-bg px-2.5 py-1 rounded-md border border-border font-medium">
@@ -445,7 +445,7 @@ export function VideoCreatorWizard() {
                 {scenes.map((scene, index) => (
                   <div key={scene.id} className="bg-surface border border-border rounded-2xl overflow-hidden shadow-lg flex flex-col h-fit">
                     <div className="bg-surface-raised/50 px-4 py-2.5 flex justify-between items-center border-b border-border">
-                      <span className="text-white font-medium text-sm">Scene {index + 1}</span>
+                      <span className="text-text font-medium text-sm">Scene {index + 1}</span>
                       <span className="text-xs bg-bg text-muted px-2 py-0.5 rounded border border-border">{scene.duration}</span>
                     </div>
 
@@ -454,7 +454,7 @@ export function VideoCreatorWizard() {
                       
                       {/* Caption Overlay Preview */}
                       <div className="absolute inset-0 flex flex-col justify-center p-6 pointer-events-none">
-                        <h1 className={`text-white text-center uppercase tracking-tight ${
+                        <h1 className={`text-text text-center uppercase tracking-tight ${
                           scene.templateId === 'tiktok_bold' ? 'text-2xl font-black drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]' : 
                           scene.templateId === 'cinematic_subtitle' ? 'text-lg font-serif italic mt-auto drop-shadow-md' : 'hidden'
                         }`}>
@@ -464,7 +464,7 @@ export function VideoCreatorWizard() {
                       
                       {/* Hover Actions */}
                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-auto">
-                        <button className="bg-white/10 hover:bg-white/20 backdrop-blur text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-white/10">
+                        <button className="bg-white/10 hover:bg-white/20 backdrop-blur text-text px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-white/10">
                           Edit Image Prompt
                         </button>
                       </div>
@@ -478,7 +478,7 @@ export function VideoCreatorWizard() {
                         <select 
                           value={scene.templateId}
                           onChange={(e) => updateSceneTemplate(scene.id, e.target.value)}
-                          className="w-full bg-bg border border-border rounded p-2 text-sm text-white focus:outline-none focus:border-primary appearance-none"
+                          className="w-full bg-bg border border-border rounded p-2 text-sm text-text focus:outline-none focus:border-primary appearance-none"
                         >
                           {CAPTION_TEMPLATES.map(t => (
                             <option key={t.id} value={t.id}>{t.name}</option>
@@ -489,7 +489,7 @@ export function VideoCreatorWizard() {
                         <label className="text-xs text-muted flex items-center mb-1.5 font-medium uppercase tracking-wider">
                           <Type size={12} className="mr-1.5 text-blue-400"/> Caption Text
                         </label>
-                        <input type="text" defaultValue={scene.caption} className="w-full bg-bg border border-border rounded p-2 text-sm text-white focus:outline-none focus:border-primary" />
+                        <input type="text" defaultValue={scene.caption} className="w-full bg-bg border border-border rounded p-2 text-sm text-text focus:outline-none focus:border-primary" />
                       </div>
                     </div>
                   </div>
@@ -602,7 +602,7 @@ export function VideoCreatorWizard() {
                     <select 
                       value={musicVibe}
                       onChange={(e) => setMusicVibe(e.target.value)}
-                      className="w-full md:w-1/2 bg-bg border border-border rounded-xl p-3 text-sm text-white focus:outline-none focus:border-blue-400 appearance-none"
+                      className="w-full md:w-1/2 bg-bg border border-border rounded-xl p-3 text-sm text-text focus:outline-none focus:border-blue-400 appearance-none"
                     >
                       <option value="ambient">Ambient & Atmospheric</option>
                       <option value="cinematic">Cinematic Epic</option>
@@ -630,7 +630,7 @@ export function VideoCreatorWizard() {
             <div className="animate-in fade-in slide-in-from-right-8 duration-500 h-full flex flex-col max-w-4xl mx-auto w-full">
               <div className="text-center mb-8 shrink-0">
                 <div className="w-16 h-16 bg-gradient-to-br from-[#10b981] to-[#0ea5e9] rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl shadow-primary/20">
-                  <CheckCircle2 size={32} className="text-white" />
+                  <CheckCircle2 size={32} className="text-text" />
                 </div>
                 <h2 className="text-3xl font-bold mb-2">Ready to Compile</h2>
                 <p className="text-muted">All assets have been configured. Review the final details.</p>
@@ -643,17 +643,17 @@ export function VideoCreatorWizard() {
                     <div className="space-y-4">
                       <div className="flex justify-between items-center border-b border-border pb-3">
                         <span className="text-muted">Total Scenes</span>
-                        <span className="text-white font-bold">{scenes.length}</span>
+                        <span className="text-text font-bold">{scenes.length}</span>
                       </div>
                       <div className="flex justify-between items-center border-b border-border pb-3">
                         <span className="text-muted">Total Duration</span>
-                        <span className="text-white font-bold">
+                        <span className="text-text font-bold">
                           {avScript.reduce((acc, scene) => acc + parseFloat(scene.duration || 0), 0).toFixed(1)} Seconds
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-muted">Music Vibe</span>
-                        <span className="text-white font-bold capitalize">{musicVibe}</span>
+                        <span className="text-text font-bold capitalize">{musicVibe}</span>
                       </div>
                     </div>
                   </div>
@@ -708,7 +708,7 @@ export function VideoCreatorWizard() {
           {currentStep === 7 && (
             <div className="animate-in fade-in slide-in-from-bottom-8 duration-500 h-full flex flex-col justify-center max-w-lg mx-auto w-full text-center">
               <div className="w-24 h-24 bg-gradient-to-br from-[#10b981] to-[#0ea5e9] rounded-full flex items-center justify-center mx-auto mb-8 shadow-xl shadow-primary/20">
-                <CheckCircle2 size={48} className="text-white" />
+                <CheckCircle2 size={48} className="text-text" />
               </div>
               <h2 className="text-4xl font-bold mb-4">Video Rendering!</h2>
               <p className="text-muted mb-10 text-lg leading-relaxed">
@@ -717,7 +717,7 @@ export function VideoCreatorWizard() {
               
               <button 
                 onClick={() => navigate('/videos')}
-                className="bg-surface border border-border hover:border-primary text-white px-8 py-4 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center mx-auto w-full text-lg group"
+                className="bg-surface border border-border hover:border-primary text-text px-8 py-4 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center mx-auto w-full text-lg group"
               >
                 <Video size={24} className="mr-3 text-primary group-hover:scale-110 transition-transform" />
                 Go to My Videos
@@ -750,7 +750,7 @@ export function VideoCreatorWizard() {
                   value={cloneName}
                   onChange={(e) => setCloneName(e.target.value)}
                   placeholder="e.g. My Podcast Voice"
-                  className="w-full bg-bg border border-border rounded-xl p-3 text-sm text-white focus:outline-none focus:border-primary"
+                  className="w-full bg-bg border border-border rounded-xl p-3 text-sm text-text focus:outline-none focus:border-primary"
                 />
               </div>
 
