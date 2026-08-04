@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Film, Lightbulb, Type, Mic, Music, Play, CheckCircle2, ChevronRight, Wand2, ImageIcon, LayoutTemplate, Eye, Clock, Plus, Trash2, GripVertical, MousePointerClick, Link, Video, UploadCloud, User } from 'lucide-react';
+import { getStoredApiKey } from '../hooks/useDigitalSuite';
 
 const STEPS = [
   { id: 1, title: 'Idea', icon: Lightbulb },
@@ -124,20 +125,95 @@ export function VideoCreatorWizard() {
   const [postDescription, setPostDescription] = useState('Struggling to get leads? 🛑 You might be doing it the hard way.\n\nWe spent years figuring out the exact framework to automate lead generation so you don\'t have to waste time on manual outreach. Check out how we do it effortlessly!\n\n👇 Comment "SYSTEM" below and I will DM you the exact framework for free!');
   
   const [isCompiling, setIsCompiling] = useState(false);
+  const [isGeneratingScript, setIsGeneratingScript] = useState(false);
+  const [selectedIdea, setSelectedIdea] = useState(null);
+  const [ideaError, setIdeaError] = useState('');
+  const [scriptError, setScriptError] = useState('');
 
-  const handleGenerateIdeas = () => {
+  const handleGenerateIdeas = async () => {
     if (!topic.trim()) return;
+    setIdeaError('');
     setIsGeneratingIdeas(true);
-    setTimeout(() => {
-      setIdeas(MOCK_IDEAS);
+    setIdeas([]);
+    try {
+      const apiKey = getStoredApiKey('gemini');
+      if (!apiKey) {
+        setIdeaError('No Gemini API key found. Please add it in DigitalSuite Settings → AI Models.');
+        return;
+      }
+      const prompt = `You are a short-form video strategist specializing in Attraction Marketing on social media.\n\nGenerate exactly 3 distinct short-form video ideas for the topic: "${topic.trim()}".\n\nEach idea must:\n- Use a proven Attraction Marketing hook (curiosity, social proof, myth buster, behind-the-scenes, transformation, etc.)\n- Be suitable for TikTok / Instagram Reels (vertical short-form)\n- Have a draft script that begins with an attention-grabbing first line\n- Be specific and compelling, NOT generic\n\nReturn ONLY a valid JSON array (no markdown, no explanation) with exactly this structure:\n[\n  {\n    "id": "idea-1",\n    "title": "Hook Type Name",\n    "description": "One sentence describing the psychological approach and why it works.",\n    "draft_script": "The full opening lines / hook script for this idea."\n  }\n]`;
+
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { responseMimeType: 'application/json', temperature: 0.9 }
+          })
+        }
+      );
+      if (!res.ok) throw new Error(`Gemini API error: ${res.status}`);
+      const data = await res.json();
+      const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
+      const parsed = JSON.parse(raw);
+      setIdeas(Array.isArray(parsed) ? parsed : []);
+    } catch (err) {
+      console.error('Idea generation failed:', err);
+      setIdeaError('Failed to generate ideas. Please check your API key and try again.');
+    } finally {
       setIsGeneratingIdeas(false);
-    }, 1500);
+    }
   };
 
   const selectIdea = (idea) => {
+    setSelectedIdea(idea);
     setScript(idea.draft_script);
-    setAvScript(MOCK_AV_SCRIPT);
-    setCurrentStep(2);
+    setCurrentStep(2); // Go to Action step; script generates on "Generate Script" click
+  };
+
+  const handleGenerateScript = async () => {
+    if (!selectedIdea) return;
+    setScriptError('');
+    setIsGeneratingScript(true);
+    try {
+      const apiKey = getStoredApiKey('gemini');
+      if (!apiKey) {
+        setScriptError('No Gemini API key found. Please add it in DigitalSuite Settings → AI Models.');
+        return;
+      }
+      const ctaValue = ctaType === 'comment' ? ctaKeyword : ctaLink;
+      const ctaInstruction = ctaType === 'comment'
+        ? `The FINAL scene must end with the viewer being told to comment the word "${ctaValue}" to get something valuable.`
+        : `The FINAL scene must direct the viewer to click the link in bio.`;
+
+      const prompt = `You are an expert short-form video director and script writer.\n\nBase Idea: "${selectedIdea.title}"\nScript Draft: "${selectedIdea.draft_script}"\n\nTransform this into a structured scene-by-scene storyboard.\n\nRequirements:\n- Create exactly 4-6 scenes\n- CRITICAL: Each scene MUST be maximum 3 seconds (duration_seconds <= 3.0)\n- Fast, punchy pacing to hold attention on TikTok/Reels\n- Each scene needs a distinct visual concept and voiceover line\n- Caption text: 1-4 punchy UPPERCASE words\n- ${ctaInstruction}\n- Aspect ratio: ${aspectRatio}\n\nReturn ONLY valid JSON (no markdown, no explanation):\n{\n  "scenes": [\n    {\n      "id": "scene-1",\n      "duration": "2.5s",\n      "visualConcept": "Detailed visual description for this scene",\n      "voiceover": "Exact words spoken in this scene"\n    }\n  ]\n}`;
+
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { responseMimeType: 'application/json', temperature: 0.7 }
+          })
+        }
+      );
+      if (!res.ok) throw new Error(`Gemini API error: ${res.status}`);
+      const data = await res.json();
+      const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+      const parsed = JSON.parse(raw);
+      const scenes = (parsed.scenes || []).map((s, i) => ({ ...s, id: s.id || `scene-${i + 1}` }));
+      setAvScript(scenes);
+      setCurrentStep(3);
+    } catch (err) {
+      console.error('Script generation failed:', err);
+      setScriptError('Failed to generate script. Please try again.');
+    } finally {
+      setIsGeneratingScript(false);
+    }
   };
 
   const updateSceneTemplate = (id, templateId) => {
@@ -255,6 +331,10 @@ export function VideoCreatorWizard() {
                 </button>
               </div>
 
+              {ideaError && (
+                <p className="mt-4 text-center text-red-400 text-sm">{ideaError}</p>
+              )}
+
               <div className="flex justify-center mt-4">
                 <div className="flex items-center text-sm">
                   <span className="text-muted mr-3 font-medium">Video Format:</span>
@@ -354,13 +434,22 @@ export function VideoCreatorWizard() {
 
               <div className="flex justify-between items-center mt-auto md:mt-8 shrink-0">
                 <button onClick={() => setCurrentStep(1)} className="text-muted hover:text-text px-4 py-2 font-medium transition-colors">Back</button>
-                <button 
-                  onClick={() => setCurrentStep(3)}
-                  disabled={(ctaType === 'comment' && !ctaKeyword.trim()) || (ctaType === 'link' && !ctaLink.trim())}
-                  className="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-xl font-medium transition-colors flex items-center shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Generate Script <ChevronRight size={18} className="ml-2" />
-                </button>
+                <div className="flex flex-col items-end">
+                  <button 
+                    onClick={handleGenerateScript}
+                    disabled={(ctaType === 'comment' && !ctaKeyword.trim()) || (ctaType === 'link' && !ctaLink.trim()) || isGeneratingScript}
+                    className="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-xl font-medium transition-colors flex items-center shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isGeneratingScript ? (
+                      <><div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin mr-2" />Writing Script...</>
+                    ) : (
+                      <>Generate Script <ChevronRight size={18} className="ml-2" /></>
+                    )}
+                  </button>
+                  {scriptError && (
+                    <p className="mt-3 text-center text-red-400 text-sm">{scriptError}</p>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -408,7 +497,11 @@ export function VideoCreatorWizard() {
                           <Eye size={14} className="mr-2 text-primary"/> Visual Concept
                         </label>
                         <textarea 
-                          defaultValue={scene.visualConcept}
+                          value={scene.visualConcept || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAvScript(prev => prev.map(s => s.id === scene.id ? { ...s, visualConcept: val } : s));
+                          }}
                           className="flex-1 w-full bg-bg/50 border border-border rounded-xl p-3 text-sm text-text focus:outline-none focus:border-primary focus:bg-bg resize-none min-h-[100px] leading-relaxed transition-colors shadow-inner" 
                           placeholder="Describe what happens on screen..."
                         />
@@ -420,7 +513,11 @@ export function VideoCreatorWizard() {
                           <Mic size={14} className="mr-2 text-purple-400"/> Voiceover / Dialogue
                         </label>
                         <textarea 
-                          defaultValue={scene.voiceover}
+                          value={scene.voiceover || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAvScript(prev => prev.map(s => s.id === scene.id ? { ...s, voiceover: val } : s));
+                          }}
                           className="flex-1 w-full bg-bg/50 border border-border rounded-xl p-3 text-sm text-text focus:outline-none focus:border-purple-400 focus:bg-bg resize-none min-h-[100px] leading-relaxed transition-colors shadow-inner" 
                           placeholder="What is spoken during this scene?"
                         />
