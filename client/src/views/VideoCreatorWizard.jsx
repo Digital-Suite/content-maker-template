@@ -138,7 +138,13 @@ export function VideoCreatorWizard() {
       if (res.ok) {
         const models = await res.json();
         const flashModels = models
-          .filter(m => m.provider === 'Google AI' && m.id.includes('flash'))
+          .filter(m => 
+            m.provider === 'Google AI' && 
+            m.id.includes('flash') && 
+            !m.id.includes('preview') && 
+            !m.id.includes('exp') && 
+            !m.id.includes('omni')
+          )
           .sort((a, b) => b.id.localeCompare(a.id));
         if (flashModels.length > 0) return flashModels[0].id;
       }
