@@ -267,7 +267,15 @@ export function VideoCreatorWizard() {
 
   const handleGenerateVisuals = async () => {
     if (avScript.length === 0) return;
+    
+    // Skip if we've already generated visuals for this script length
+    if (scenes.length === avScript.length && scenes.every(s => s.image)) {
+      setCurrentStep(4);
+      return;
+    }
+
     setIsGeneratingVisuals(true);
+    setScriptError(null);
     try {
       const apiKey = getStoredApiKey('gemini'); // In case we use nano_banana later
       const newScenes = [...avScript];
@@ -278,6 +286,7 @@ export function VideoCreatorWizard() {
         const imageUrl = await generateSceneImage(scene.visualConcept, aspectRatio, 'nano_banana', apiKey);
         newScenes[index].image = imageUrl;
         newScenes[index].caption = scene.voiceover || '';
+        newScenes[index].templateId = 'tiktok_bold';
       }
       
       setScenes(newScenes);
@@ -579,6 +588,7 @@ export function VideoCreatorWizard() {
                           onChange={(e) => {
                             const val = e.target.value;
                             setAvScript(prev => prev.map(s => s.id === scene.id ? { ...s, visualConcept: val } : s));
+                            setScenes([]); // clear scenes to force regeneration on next step
                           }}
                           className="flex-1 w-full bg-bg/50 border border-border rounded-xl p-3 text-sm text-text focus:outline-none focus:border-primary focus:bg-bg resize-none min-h-[100px] leading-relaxed transition-colors shadow-inner" 
                           placeholder="Describe what happens on screen..."
@@ -618,7 +628,7 @@ export function VideoCreatorWizard() {
                   className="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-xl font-medium transition-colors flex items-center shadow-lg shadow-primary/20 disabled:opacity-50"
                 >
                   {isGeneratingVisuals ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin mr-2" /> : null}
-                  {isGeneratingVisuals ? 'Generating Visuals...' : 'Generate Visual Assets'} {isGeneratingVisuals ? null : <ChevronRight size={18} className="ml-2" />}
+                  {isGeneratingVisuals ? 'Generating Visuals...' : (scenes.length > 0 ? 'Continue to Storyboard' : 'Generate Visual Assets')} {isGeneratingVisuals ? null : <ChevronRight size={18} className="ml-2" />}
                 </button>
               </div>
             </div>
@@ -631,10 +641,9 @@ export function VideoCreatorWizard() {
                 <h2 className="text-2xl font-bold mb-2">Storyboard & Visuals</h2>
                 <p className="text-muted text-sm">Review the AI-generated scenes, tweak prompts, and select Caption Templates.</p>
               </div>
-              
-              <div className={`flex-1 grid grid-cols-1 ${aspectRatio === '16:9' ? 'md:grid-cols-2' : 'md:grid-cols-3'} gap-6 overflow-y-auto pr-2 custom-scrollbar pb-10`}>
-                {scenes.map((scene, index) => (
-                  <div key={scene.id} className="bg-surface border border-border rounded-2xl overflow-hidden shadow-lg flex flex-col h-fit">
+                            <div className="flex-1 flex overflow-x-auto overflow-y-hidden custom-scrollbar pb-10 space-x-6">
+                  {scenes.map((scene, index) => (
+                    <div key={scene.id} className="bg-surface border border-border rounded-2xl overflow-hidden shadow-lg flex flex-col h-fit flex-shrink-0 w-[340px]">
                     <div className="bg-surface-raised/50 px-4 py-2.5 flex justify-between items-center border-b border-border">
                       <span className="text-text font-medium text-sm">Scene {index + 1}</span>
                       <span className="text-xs bg-bg text-muted px-2 py-0.5 rounded border border-border">{scene.duration}</span>
