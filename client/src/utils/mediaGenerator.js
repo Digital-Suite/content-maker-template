@@ -2,8 +2,12 @@ export const generateSceneImage = async (prompt, aspectRatio, provider = 'pollin
   const [w, h] = aspectRatio === '16:9' ? [1920, 1080] : aspectRatio === '1:1' ? [1080, 1080] : [1080, 1920];
   
   if (provider === 'pollinations') {
-    // Instant URL resolution - bypass cache by appending random salt
-    return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w}&height=${h}&nologo=true&seed=${Math.floor(Math.random()*10000)}`;
+    // Fetch image as blob to control concurrency and avoid 429 Too Many Requests
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w}&height=${h}&nologo=true&seed=${Math.floor(Math.random()*10000)}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Pollinations fetch failed");
+    const blob = await res.blob();
+    return URL.createObjectURL(blob);
   } 
   
   if (provider === 'nano_banana') {

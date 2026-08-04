@@ -272,12 +272,13 @@ export function VideoCreatorWizard() {
       const apiKey = getStoredApiKey('gemini'); // In case we use nano_banana later
       const newScenes = [...avScript];
       
-      await Promise.all(newScenes.map(async (scene, index) => {
-        // We use pollinations by default, but this abstracts it so we can easily swap to nano_banana
+      // Fetch sequentially to prevent rate limiting (429) from pollinations
+      for (let index = 0; index < newScenes.length; index++) {
+        const scene = newScenes[index];
         const imageUrl = await generateSceneImage(scene.visualConcept, aspectRatio, 'pollinations', apiKey);
         newScenes[index].image = imageUrl;
         newScenes[index].caption = scene.voiceover || '';
-      }));
+      }
       
       setScenes(newScenes);
       setCurrentStep(4);
