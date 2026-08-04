@@ -107,3 +107,18 @@ export function getStoredApiKey(provider = 'gemini') {
     return keyMap[provider] || null;
   } catch { return null; }
 }
+
+/**
+ * Utility: fetch Voicebox profiles from the local sidecar
+ */
+export async function fetchVoiceboxProfiles() {
+  try {
+    const res = await fetch("http://127.0.0.1:14800/profiles");
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.profiles || [];
+  } catch (e) {
+    console.warn("Failed to fetch Voicebox profiles", e);
+    return [];
+  }
+}

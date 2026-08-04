@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Film, Lightbulb, Type, Mic, Music, Play, CheckCircle2, ChevronRight, Wand2, ImageIcon, LayoutTemplate, Eye, Clock, Plus, Trash2, GripVertical, MousePointerClick, Link, Video, UploadCloud, User } from 'lucide-react';
-import { getStoredApiKey } from '../hooks/useDigitalSuite';
+import { getStoredApiKey, fetchVoiceboxProfiles } from '../hooks/useDigitalSuite';
+import { generateSceneImage } from '../utils/mediaGenerator';
 
 const STEPS = [
   { id: 1, title: 'Idea', icon: Lightbulb },
@@ -129,6 +130,18 @@ export function VideoCreatorWizard() {
   const [selectedIdea, setSelectedIdea] = useState(null);
   const [ideaError, setIdeaError] = useState('');
   const [scriptError, setScriptError] = useState('');
+  
+  const [isGeneratingVisuals, setIsGeneratingVisuals] = useState(false);
+  const [voiceboxProfiles, setVoiceboxProfiles] = useState([]);
+  
+  React.useEffect(() => {
+    fetchVoiceboxProfiles().then(profiles => {
+      if (profiles && profiles.length > 0) {
+        setVoiceboxProfiles(profiles);
+        setSelectedVoice(profiles[0].id); // default to first real voice
+      }
+    });
+  }, []);
 
   // Resolves the latest Gemini flash model synced from the DigitalSuite backend
   const getLatestFlashModel = async () => {
@@ -231,9 +244,15 @@ export function VideoCreatorWizard() {
       const data = await res.json();
       const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
       const parsed = JSON.parse(raw);
-      const scenes = (parsed.scenes || []).map((s, i) => ({ ...s, id: s.id || `scene-${i + 1}` }));
-      setAvScript(scenes);
-      setCurrentStep(3);
+      const scriptJson = (parsed || {});
+      if (scriptJson.scenes) {
+        setAvScript(scriptJson.scenes);
+        // Initialize scenes structure matching avScript, without images yet
+        setScenes(scriptJson.scenes.map(s => ({ ...s, image: '', caption: s.voiceover || '' })));
+        setCurrentStep(3);
+      } else {
+        throw new Error("Invalid script format");
+      }
     } catch (err) {
       console.error('Script generation failed:', err);
       setScriptError('Failed to generate script. Please try again.');
@@ -244,6 +263,38 @@ export function VideoCreatorWizard() {
 
   const updateSceneTemplate = (id, templateId) => {
     setScenes(scenes.map(s => s.id === id ? { ...s, templateId } : s));
+  };
+
+  const handleGenerateVisuals = async () => {
+    if (avScript.length === 0) return;
+    setIsGeneratingVisuals(true);
+    try {
+      const apiKey = getStoredApiKey('gemini'); // In case we use nano_banana later
+      const newScenes = [...avScript];
+      
+      await Promise.all(newScenes.map(async (scene, index) => {
+        // We use pollinations by default, but this abstracts it so we can easily swap to nano_banana
+        const imageUrl = await generateSceneImage(scene.visualConcept, aspectRatio, 'pollinations', apiKey);
+        newScenes[index].image = imageUrl;
+        newScenes[index].caption = scene.voiceover || '';
+      }));
+      
+      setScenes(newScenes);
+      setCurrentStep(4);
+    } catch (e) {
+      console.error("Failed to generate visuals", e);
+      alert("Failed to generate visual assets.");
+    } finally {
+      setIsGeneratingVisuals(false);
+    }
+  };
+
+  const addScene = () => {
+    setIsCompiling(true);
+    setTimeout(() => {
+      setIsCompiling(false);
+      setCurrentStep(7);
+    }, 2000);
   };
 
   const handleCompile = () => {
@@ -561,10 +612,12 @@ export function VideoCreatorWizard() {
               <div className="mt-6 pt-6 border-t border-border flex justify-between items-center shrink-0">
                 <button onClick={() => setCurrentStep(2)} className="text-muted hover:text-text px-4 py-2 font-medium transition-colors">Back</button>
                 <button 
-                  onClick={() => setCurrentStep(4)}
-                  className="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-xl font-medium transition-colors flex items-center shadow-lg shadow-primary/20"
+                  onClick={handleGenerateVisuals}
+                  disabled={isGeneratingVisuals}
+                  className="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-xl font-medium transition-colors flex items-center shadow-lg shadow-primary/20 disabled:opacity-50"
                 >
-                  Generate Visual Assets <ChevronRight size={18} className="ml-2" />
+                  {isGeneratingVisuals ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin mr-2" /> : null}
+                  {isGeneratingVisuals ? 'Generating Visuals...' : 'Generate Visual Assets'} {isGeneratingVisuals ? null : <ChevronRight size={18} className="ml-2" />}
                 </button>
               </div>
             </div>
@@ -669,7 +722,7 @@ export function VideoCreatorWizard() {
                   </div>
                   
                   <div className="flex gap-3 overflow-x-auto pb-4 custom-scrollbar">
-                    {voices.map(voice => (
+                    {(voiceboxProfiles.length > 0 ? voiceboxProfiles : voices).map(voice => (
                       <div key={voice.id} className="flex flex-col gap-3 shrink-0">
                         {/* Voice Card */}
                         <div 
@@ -724,8 +777,17 @@ export function VideoCreatorWizard() {
                         <div className="flex-1">
                           <textarea 
                             defaultValue={scene.voiceover} 
-                            className="w-full bg-surface-raised border border-border rounded-xl p-3 text-sm text-text focus:outline-none focus:border-primary resize-none h-20" 
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                setScenes(prev => prev.map(s => s.id === scene.id ? { ...s, voiceover: val } : s));
+                            }}
+                            className="w-full bg-surface-raised border border-border rounded-xl p-3 text-sm text-text focus:outline-none focus:border-primary resize-none h-20 mb-2" 
                           />
+                          {scene.voiceover && selectedVoice && (
+                             <audio controls className="w-full h-8 outline-none">
+                               <source src={`http://127.0.0.1:14800/generate/stream/live?profile_id=${selectedVoice}&text=${encodeURIComponent(scene.voiceover)}&language=en`} type="audio/wav" />
+                             </audio>
+                          )}
                         </div>
                       </div>
                     ))}
