@@ -272,10 +272,10 @@ export function VideoCreatorWizard() {
       const apiKey = getStoredApiKey('gemini'); // In case we use nano_banana later
       const newScenes = [...avScript];
       
-      // Fetch sequentially to prevent rate limiting (429) from pollinations
+      // Fetch sequentially
       for (let index = 0; index < newScenes.length; index++) {
         const scene = newScenes[index];
-        const imageUrl = await generateSceneImage(scene.visualConcept, aspectRatio, 'pollinations', apiKey);
+        const imageUrl = await generateSceneImage(scene.visualConcept, aspectRatio, 'nano_banana', apiKey);
         newScenes[index].image = imageUrl;
         newScenes[index].caption = scene.voiceover || '';
       }
@@ -284,7 +284,7 @@ export function VideoCreatorWizard() {
       setCurrentStep(4);
     } catch (e) {
       console.error("Failed to generate visuals", e);
-      alert("Failed to generate visual assets.");
+      setScriptError("Failed to generate visual assets. Check your API key.");
     } finally {
       setIsGeneratingVisuals(false);
     }
