@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Film, Lightbulb, Type, Mic, Music, Play, CheckCircle2, ChevronRight, Wand2, ImageIcon, LayoutTemplate, Eye, Clock, Plus, Trash2, GripVertical, MousePointerClick, Link, Video, UploadCloud, User } from 'lucide-react';
+import { Film, Lightbulb, Type, Mic, Music, Play, CheckCircle2, ChevronRight, ChevronLeft, Wand2, ImageIcon, LayoutTemplate, Eye, Clock, Plus, Trash2, GripVertical, MousePointerClick, Link, Video, UploadCloud, User } from 'lucide-react';
 import { getStoredApiKey, fetchVoiceboxProfiles } from '../hooks/useDigitalSuite';
 import { generateSceneImage } from '../utils/mediaGenerator';
 
@@ -132,6 +132,7 @@ export function VideoCreatorWizard() {
   const [scriptError, setScriptError] = useState('');
   
   const [isGeneratingVisuals, setIsGeneratingVisuals] = useState(false);
+  const [regeneratingSceneId, setRegeneratingSceneId] = useState(null);
   const [voiceboxProfiles, setVoiceboxProfiles] = useState([]);
   
   React.useEffect(() => {
@@ -285,6 +286,8 @@ export function VideoCreatorWizard() {
         const scene = newScenes[index];
         const imageUrl = await generateSceneImage(scene.visualConcept, aspectRatio, 'nano_banana', apiKey);
         newScenes[index].image = imageUrl;
+        newScenes[index].imageHistory = [imageUrl];
+        newScenes[index].currentImageIndex = 0;
         newScenes[index].caption = scene.voiceover || '';
         newScenes[index].templateId = 'tiktok_bold';
       }
@@ -297,6 +300,40 @@ export function VideoCreatorWizard() {
     } finally {
       setIsGeneratingVisuals(false);
     }
+  };
+
+  const handleRegenerateSceneImage = async (sceneId) => {
+    setRegeneratingSceneId(sceneId);
+    try {
+      const sceneIndex = scenes.findIndex(s => s.id === sceneId);
+      const scene = scenes[sceneIndex];
+      const apiKey = getStoredApiKey('gemini');
+      const newImageUrl = await generateSceneImage(scene.visualConcept, aspectRatio, 'nano_banana', apiKey);
+      
+      setScenes(prev => {
+        const newScenes = [...prev];
+        const target = newScenes[sceneIndex];
+        const history = target.imageHistory || [target.image];
+        target.imageHistory = [...history, newImageUrl];
+        target.currentImageIndex = target.imageHistory.length - 1;
+        target.image = newImageUrl;
+        return newScenes;
+      });
+    } catch (e) {
+      console.error("Failed to regenerate image", e);
+    } finally {
+      setRegeneratingSceneId(null);
+    }
+  };
+
+  const handleCycleImage = (sceneId, direction) => {
+    setScenes(prev => prev.map(s => {
+      if (s.id !== sceneId || !s.imageHistory || s.imageHistory.length <= 1) return s;
+      let newIndex = s.currentImageIndex + direction;
+      if (newIndex < 0) newIndex = s.imageHistory.length - 1;
+      if (newIndex >= s.imageHistory.length) newIndex = 0;
+      return { ...s, currentImageIndex: newIndex, image: s.imageHistory[newIndex] };
+    }));
   };
 
   const addScene = () => {
@@ -641,15 +678,17 @@ export function VideoCreatorWizard() {
                 <h2 className="text-2xl font-bold mb-2">Storyboard & Visuals</h2>
                 <p className="text-muted text-sm">Review the AI-generated scenes, tweak prompts, and select Caption Templates.</p>
               </div>
-                            <div className="flex-1 flex overflow-x-auto overflow-y-hidden custom-scrollbar pb-10 space-x-6">
+              <div className="flex-1 flex overflow-x-auto overflow-y-auto custom-scrollbar pb-10 space-x-6">
                   {scenes.map((scene, index) => (
-                    <div key={scene.id} className="bg-surface border border-border rounded-2xl overflow-hidden shadow-lg flex flex-col h-fit flex-shrink-0 w-[340px]">
-                    <div className="bg-surface-raised/50 px-4 py-2.5 flex justify-between items-center border-b border-border">
-                      <span className="text-text font-medium text-sm">Scene {index + 1}</span>
-                      <span className="text-xs bg-bg text-muted px-2 py-0.5 rounded border border-border">{scene.duration}</span>
+                    <div key={scene.id} className="bg-surface border border-border rounded-2xl overflow-hidden shadow-lg flex flex-col h-fit flex-shrink-0 w-[340px] max-h-full overflow-y-auto custom-scrollbar">
+                    <div className="bg-surface-raised/50 px-4 py-2.5 flex justify-between items-center border-b border-border shrink-0">
+                      <span className="text-text font-medium text-sm">Scene {index + 1} {scene.imageHistory?.length > 1 && <span className="text-muted ml-2 text-xs">({scene.currentImageIndex + 1}/{scene.imageHistory.length})</span>}</span>
+                      {scene.duration && (
+                        <span className="text-xs bg-bg text-muted px-2 py-0.5 rounded border border-border">{scene.duration}</span>
+                      )}
                     </div>
 
-                    <div className={`relative bg-bg group ${aspectRatio === '9:16' ? 'aspect-[9/16]' : aspectRatio === '1:1' ? 'aspect-square' : 'aspect-video'}`}>
+                    <div className={`shrink-0 relative bg-bg group ${aspectRatio === '9:16' ? 'aspect-[9/16]' : aspectRatio === '1:1' ? 'aspect-square' : 'aspect-video'}`}>
                       <img src={scene.image} alt={`Scene ${index + 1}`} className="w-full h-full object-cover opacity-80" />
                       
                       {/* Caption Overlay Preview */}
@@ -662,10 +701,30 @@ export function VideoCreatorWizard() {
                         </h1>
                       </div>
                       
+                      {/* Image Cycler Chevrons */}
+                      {scene.imageHistory?.length > 1 && (
+                        <>
+                          <button onClick={() => handleCycleImage(scene.id, -1)} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black text-white p-1.5 rounded-full backdrop-blur transition-all opacity-0 group-hover:opacity-100 z-10">
+                            <ChevronLeft size={18} />
+                          </button>
+                          <button onClick={() => handleCycleImage(scene.id, 1)} className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black text-white p-1.5 rounded-full backdrop-blur transition-all opacity-0 group-hover:opacity-100 z-10">
+                            <ChevronRight size={18} />
+                          </button>
+                        </>
+                      )}
+                      
                       {/* Hover Actions */}
                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-auto">
-                        <button className="bg-white/10 hover:bg-white/20 backdrop-blur text-text px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-white/10">
-                          Edit Image Prompt
+                        <button 
+                          onClick={() => handleRegenerateSceneImage(scene.id)}
+                          disabled={regeneratingSceneId === scene.id}
+                          className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-lg shadow-primary/20 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {regeneratingSceneId === scene.id ? (
+                            <><div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin mr-2" /> Regenerating...</>
+                          ) : (
+                            <><Wand2 size={14} className="mr-2" /> Regenerate Image</>
+                          )}
                         </button>
                       </div>
                     </div>

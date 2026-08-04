@@ -13,10 +13,11 @@ export const generateSceneImage = async (prompt, aspectRatio, provider = 'pollin
   if (provider === 'nano_banana') {
     // Nano Banana (Gemini Flash Lite Image)
     if (!apiKey) throw new Error("API Key required for Nano Banana");
+    const safePrompt = prompt + " (CRITICAL INSTRUCTION: Do NOT include any text, letters, words, or typography in this image whatsoever. Background should be completely textless.)";
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-image:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+      body: JSON.stringify({ contents: [{ parts: [{ text: safePrompt }] }] })
     });
     const data = await res.json();
     if (!data.candidates || !data.candidates[0].content.parts[0].inlineData) {
