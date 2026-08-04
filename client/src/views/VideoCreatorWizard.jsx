@@ -144,7 +144,7 @@ export function VideoCreatorWizard() {
       const prompt = `You are a short-form video strategist specializing in Attraction Marketing on social media.\n\nGenerate exactly 3 distinct short-form video ideas for the topic: "${topic.trim()}".\n\nEach idea must:\n- Use a proven Attraction Marketing hook (curiosity, social proof, myth buster, behind-the-scenes, transformation, etc.)\n- Be suitable for TikTok / Instagram Reels (vertical short-form)\n- Have a draft script that begins with an attention-grabbing first line\n- Be specific and compelling, NOT generic\n\nReturn ONLY a valid JSON array (no markdown, no explanation) with exactly this structure:\n[\n  {\n    "id": "idea-1",\n    "title": "Hook Type Name",\n    "description": "One sentence describing the psychological approach and why it works.",\n    "draft_script": "The full opening lines / hook script for this idea."\n  }\n]`;
 
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -191,7 +191,7 @@ export function VideoCreatorWizard() {
       const prompt = `You are an expert short-form video director and script writer.\n\nBase Idea: "${selectedIdea.title}"\nScript Draft: "${selectedIdea.draft_script}"\n\nTransform this into a structured scene-by-scene storyboard.\n\nRequirements:\n- Create exactly 4-6 scenes\n- CRITICAL: Each scene MUST be maximum 3 seconds (duration_seconds <= 3.0)\n- Fast, punchy pacing to hold attention on TikTok/Reels\n- Each scene needs a distinct visual concept and voiceover line\n- Caption text: 1-4 punchy UPPERCASE words\n- ${ctaInstruction}\n- Aspect ratio: ${aspectRatio}\n\nReturn ONLY valid JSON (no markdown, no explanation):\n{\n  "scenes": [\n    {\n      "id": "scene-1",\n      "duration": "2.5s",\n      "visualConcept": "Detailed visual description for this scene",\n      "voiceover": "Exact words spoken in this scene"\n    }\n  ]\n}`;
 
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
