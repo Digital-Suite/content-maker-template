@@ -52,6 +52,8 @@ export function useDigitalSuite(navConfig) {
         const payload = event.data.payload || {};
         const receivedSettings = payload.settings || null;
         const receivedWorkspace = payload.workspace || null;
+        const apiBaseUrl = payload.apiBaseUrl || 'http://localhost:3333';
+        sessionStorage.setItem('ds_apiBaseUrl', apiBaseUrl);
 
         if (receivedSettings) {
           sessionStorage.setItem('ds_settings', JSON.stringify(receivedSettings));
