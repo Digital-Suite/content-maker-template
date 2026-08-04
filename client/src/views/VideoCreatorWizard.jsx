@@ -13,11 +13,12 @@ const STEPS = [
   { id: 6, title: 'Review', icon: CheckCircle2 }
 ];
 
-const CAPTION_TEMPLATES = [
-  { id: 'tiktok_bold', name: 'TikTok Bold (Center)' },
-  { id: 'cinematic_subtitle', name: 'Cinematic Subtitle (Bottom)' },
-  { id: 'news_ticker', name: 'News Ticker (Bottom Scroll)' },
-  { id: 'none', name: 'No Caption' }
+const CAPTION_COLORS = [
+  { id: 'white', name: 'White', class: 'text-white' },
+  { id: 'yellow', name: 'Yellow', class: 'text-yellow-400' },
+  { id: 'green', name: 'Green', class: 'text-green-400' },
+  { id: 'red', name: 'Red', class: 'text-red-500' },
+  { id: 'custom', name: 'Custom...' }
 ];
 
 const MOCK_IDEAS = [
@@ -67,7 +68,9 @@ const MOCK_SCENES = [
     id: 1,
     image: 'https://images.unsplash.com/photo-1493612276216-ee3925520721?auto=format&fit=crop&q=80&w=400',
     caption: 'FRUSTRATED?',
-    templateId: 'tiktok_bold',
+    captionPosition: 'center',
+    captionStyle: 'text_only',
+    captionColor: 'white',
     voiceover: 'Are you still struggling with lead generation?',
     duration: '2.5s'
   },
@@ -75,7 +78,9 @@ const MOCK_SCENES = [
     id: 2,
     image: 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?auto=format&fit=crop&q=80&w=400',
     caption: 'THE HARD WAY',
-    templateId: 'cinematic_subtitle',
+    captionPosition: 'bottom',
+    captionStyle: 'dark_overlay',
+    captionColor: 'yellow',
     voiceover: 'You are doing it the hard way. Stop wasting time.',
     duration: '2.8s'
   },
@@ -83,7 +88,9 @@ const MOCK_SCENES = [
     id: 3,
     image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=400',
     caption: 'THE SOLUTION',
-    templateId: 'tiktok_bold',
+    captionPosition: 'center',
+    captionStyle: 'blur_overlay',
+    captionColor: 'green',
     voiceover: 'Here is the exact framework we use to solve it effortlessly.',
     duration: '2.2s'
   }
@@ -262,8 +269,8 @@ export function VideoCreatorWizard() {
     }
   };
 
-  const updateSceneTemplate = (id, templateId) => {
-    setScenes(scenes.map(s => s.id === id ? { ...s, templateId } : s));
+  const updateSceneCaption = (id, key, value) => {
+    setScenes(scenes.map(s => s.id === id ? { ...s, [key]: value } : s));
   };
 
   const handleGenerateVisuals = async () => {
@@ -289,7 +296,9 @@ export function VideoCreatorWizard() {
         newScenes[index].imageHistory = [imageUrl];
         newScenes[index].currentImageIndex = 0;
         newScenes[index].caption = scene.voiceover || '';
-        newScenes[index].templateId = 'tiktok_bold';
+        newScenes[index].captionPosition = 'center';
+        newScenes[index].captionStyle = 'text_only';
+        newScenes[index].captionColor = 'white';
       }
       
       setScenes(newScenes);
@@ -692,13 +701,23 @@ export function VideoCreatorWizard() {
                       <img src={scene.image} alt={`Scene ${index + 1}`} className="w-full h-full object-cover opacity-80" />
                       
                       {/* Caption Overlay Preview */}
-                      <div className="absolute inset-0 flex flex-col justify-center p-6 pointer-events-none">
-                        <h1 className={`text-text text-center uppercase tracking-tight ${
-                          scene.templateId === 'tiktok_bold' ? 'text-2xl font-black drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]' : 
-                          scene.templateId === 'cinematic_subtitle' ? 'text-lg font-serif italic mt-auto drop-shadow-md' : 'hidden'
+                      <div className={`absolute inset-0 flex flex-col p-6 pointer-events-none ${
+                        scene.captionPosition === 'top' ? 'justify-start pt-16' : 
+                        scene.captionPosition === 'bottom' ? 'justify-end pb-16' : 'justify-center'
+                      }`}>
+                        <div className={`flex flex-col items-center justify-center w-full ${
+                          scene.captionStyle === 'dark_overlay' ? 'bg-black/60 p-4 rounded-xl' :
+                          scene.captionStyle === 'blur_overlay' ? 'backdrop-blur-md bg-black/40 p-4 border-y border-white/10' : ''
                         }`}>
-                          {scene.caption}
-                        </h1>
+                          <h1 
+                            className={`text-center uppercase tracking-tight text-2xl font-black drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] ${
+                              CAPTION_COLORS.find(c => c.id === scene.captionColor)?.class || ''
+                            }`}
+                            style={scene.captionColor === 'custom' ? { color: scene.captionCustomColor || '#ffffff' } : {}}
+                          >
+                            {scene.caption}
+                          </h1>
+                        </div>
                       </div>
                       
                       {/* Image Cycler Chevrons */}
@@ -728,29 +747,71 @@ export function VideoCreatorWizard() {
                         </button>
                       </div>
                     </div>
-
                     <div className="p-5 flex flex-col space-y-4">
-                      <div>
-                        <label className="text-xs text-muted flex items-center mb-1.5 font-medium uppercase tracking-wider">
-                          <LayoutTemplate size={12} className="mr-1.5 text-primary"/> Caption Template
-                        </label>
-                        <select 
-                          value={scene.templateId}
-                          onChange={(e) => updateSceneTemplate(scene.id, e.target.value)}
-                          className="w-full bg-bg border border-border rounded p-2 text-sm text-text focus:outline-none focus:border-primary appearance-none"
-                        >
-                          {CAPTION_TEMPLATES.map(t => (
-                            <option key={t.id} value={t.id}>{t.name}</option>
-                          ))}
-                        </select>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="col-span-3 lg:col-span-1">
+                            <label className="text-xs text-muted flex items-center mb-1.5 font-medium uppercase tracking-wider">
+                              <LayoutTemplate size={12} className="mr-1 text-primary"/> Position
+                            </label>
+                            <select 
+                              value={scene.captionPosition || 'center'}
+                              onChange={(e) => updateSceneCaption(scene.id, 'captionPosition', e.target.value)}
+                              className="w-full bg-bg border border-border rounded p-2 text-xs text-text focus:outline-none focus:border-primary appearance-none"
+                            >
+                              <option value="top">Top</option>
+                              <option value="center">Center</option>
+                              <option value="bottom">Bottom</option>
+                            </select>
+                          </div>
+                          
+                          <div className="col-span-3 lg:col-span-1">
+                            <label className="text-xs text-muted flex items-center mb-1.5 font-medium uppercase tracking-wider">
+                              <LayoutTemplate size={12} className="mr-1 text-primary"/> Style
+                            </label>
+                            <select 
+                              value={scene.captionStyle || 'text_only'}
+                              onChange={(e) => updateSceneCaption(scene.id, 'captionStyle', e.target.value)}
+                              className="w-full bg-bg border border-border rounded p-2 text-xs text-text focus:outline-none focus:border-primary appearance-none"
+                            >
+                              <option value="text_only">Text Only</option>
+                              <option value="dark_overlay">Dark Overlay</option>
+                              <option value="blur_overlay">Blur Overlay</option>
+                            </select>
+                          </div>
+
+                          <div className="col-span-3 lg:col-span-1">
+                            <label className="text-xs text-muted flex items-center mb-1.5 font-medium uppercase tracking-wider">
+                              <LayoutTemplate size={12} className="mr-1 text-primary"/> Color
+                            </label>
+                            <div className="flex items-center space-x-2">
+                              <select 
+                                value={scene.captionColor || 'white'}
+                                onChange={(e) => updateSceneCaption(scene.id, 'captionColor', e.target.value)}
+                                className="flex-1 bg-bg border border-border rounded p-2 text-xs text-text focus:outline-none focus:border-primary appearance-none"
+                              >
+                                {CAPTION_COLORS.map(c => (
+                                  <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                              </select>
+                              {scene.captionColor === 'custom' && (
+                                <input 
+                                  type="color" 
+                                  value={scene.captionCustomColor || '#ffffff'} 
+                                  onChange={(e) => updateSceneCaption(scene.id, 'captionCustomColor', e.target.value)}
+                                  className="w-8 h-8 rounded cursor-pointer bg-bg border border-border p-0.5"
+                                />
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-xs text-muted flex items-center mb-1.5 font-medium uppercase tracking-wider">
+                            <Type size={12} className="mr-1.5 text-blue-400"/> Caption Text
+                          </label>
+                          <input type="text" value={scene.caption || ''} onChange={(e) => updateSceneCaption(scene.id, 'caption', e.target.value)} className="w-full bg-bg border border-border rounded p-2 text-sm text-text focus:outline-none focus:border-primary" />
+                        </div>
                       </div>
-                      <div>
-                        <label className="text-xs text-muted flex items-center mb-1.5 font-medium uppercase tracking-wider">
-                          <Type size={12} className="mr-1.5 text-blue-400"/> Caption Text
-                        </label>
-                        <input type="text" defaultValue={scene.caption} className="w-full bg-bg border border-border rounded p-2 text-sm text-text focus:outline-none focus:border-primary" />
-                      </div>
-                    </div>
                   </div>
                 ))}
               </div>
