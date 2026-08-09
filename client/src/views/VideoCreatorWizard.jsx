@@ -380,12 +380,39 @@ export function VideoCreatorWizard() {
     }, 2000);
   };
 
+  const [sampleAudio, setSampleAudio] = useState(null);
+
   const handlePlaySample = (voiceId, e) => {
     e.stopPropagation();
+    if (playingVoice === voiceId) {
+      if (sampleAudio) {
+        sampleAudio.pause();
+        setSampleAudio(null);
+      }
+      setPlayingVoice(null);
+      return;
+    }
+    if (sampleAudio) {
+      sampleAudio.pause();
+    }
     setPlayingVoice(voiceId);
-    setTimeout(() => {
-      setPlayingVoice((current) => current === voiceId ? null : current);
-    }, 3000);
+    
+    const text = encodeURIComponent("Hello! I am ready to narrate your next viral video.");
+    const audio = new Audio(`http://127.0.0.1:14800/generate/stream/live?profile_id=${voiceId}&text=${text}&language=en`);
+    setSampleAudio(audio);
+    
+    audio.play().catch(err => {
+      console.error("Failed to play sample:", err);
+      setPlayingVoice(null);
+    });
+    audio.onended = () => {
+      setPlayingVoice(null);
+      setSampleAudio(null);
+    };
+    audio.onerror = () => {
+      setPlayingVoice(null);
+      setSampleAudio(null);
+    };
   };
 
   return (
@@ -914,7 +941,7 @@ export function VideoCreatorWizard() {
                             className="w-full bg-surface-raised border border-border rounded-xl p-3 text-sm text-text focus:outline-none focus:border-primary resize-none h-20 mb-2" 
                           />
                           {scene.voiceover && selectedVoice && (
-                             <audio controls className="w-full h-8 outline-none">
+                             <audio key={`${scene.id}-${selectedVoice}-${scene.voiceover}`} controls preload="none" className="w-full h-8 outline-none">
                                <source src={`http://127.0.0.1:14800/generate/stream/live?profile_id=${selectedVoice}&text=${encodeURIComponent(scene.voiceover)}&language=en`} type="audio/wav" />
                              </audio>
                           )}
