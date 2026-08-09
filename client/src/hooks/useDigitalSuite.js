@@ -113,7 +113,7 @@ export function getStoredApiKey(provider = 'gemini') {
  */
 export async function fetchVoiceboxProfiles() {
   try {
-    const res = await fetch("http://127.0.0.1:14800/profiles");
+    const res = await fetch("http://localhost:14800/profiles");
     if (!res.ok) return [];
     const data = await res.json();
     return data.profiles || [];

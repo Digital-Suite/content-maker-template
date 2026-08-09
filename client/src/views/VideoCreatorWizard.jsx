@@ -398,7 +398,7 @@ export function VideoCreatorWizard() {
     setPlayingVoice(voiceId);
     
     const text = encodeURIComponent("Hello! I am ready to narrate your next viral video.");
-    const audio = new Audio(`http://127.0.0.1:14800/generate/stream/live?profile_id=${voiceId}&text=${text}&language=en`);
+    const audio = new Audio(`http://localhost:14800/generate/stream/live?profile_id=${voiceId}&text=${text}&language=en`);
     setSampleAudio(audio);
     
     audio.play().catch(err => {
@@ -942,7 +942,7 @@ export function VideoCreatorWizard() {
                           />
                           {scene.voiceover && selectedVoice && (
                              <audio key={`${scene.id}-${selectedVoice}-${scene.voiceover}`} controls preload="none" className="w-full h-8 outline-none">
-                               <source src={`http://127.0.0.1:14800/generate/stream/live?profile_id=${selectedVoice}&text=${encodeURIComponent(scene.voiceover)}&language=en`} type="audio/wav" />
+                               <source src={`http://localhost:14800/generate/stream/live?profile_id=${selectedVoice}&text=${encodeURIComponent(scene.voiceover)}&language=en`} type="audio/wav" />
                              </audio>
                           )}
                         </div>
