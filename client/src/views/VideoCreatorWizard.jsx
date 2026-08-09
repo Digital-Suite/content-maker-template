@@ -129,7 +129,7 @@ export function VideoCreatorWizard() {
   const [isCloning, setIsCloning] = useState(false);
   const [playingVoice, setPlayingVoice] = useState(null);
   
-  const [postDescription, setPostDescription] = useState('Struggling to get leads? 🛑 You might be doing it the hard way.\n\nWe spent years figuring out the exact framework to automate lead generation so you don\'t have to waste time on manual outreach. Check out how we do it effortlessly!\n\n👇 Comment "SYSTEM" below and I will DM you the exact framework for free!');
+  const [postDescription, setPostDescription] = useState('');
   
   const [isCompiling, setIsCompiling] = useState(false);
   const [isGeneratingScript, setIsGeneratingScript] = useState(false);

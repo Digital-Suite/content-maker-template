@@ -36,6 +36,17 @@ export const RemotionRoot: React.FC = () => {
           scenes: []
         }}
       />
+      <Composition
+        id="ContentMakerVideo_Square"
+        component={ContentMakerComposition}
+        durationInFrames={300}
+        fps={30}
+        width={1080}
+        height={1080}
+        defaultProps={{
+          scenes: []
+        }}
+      />
     </>
   );
 };
