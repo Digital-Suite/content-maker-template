@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Film, Lightbulb, Type, Mic, Music, Play, CheckCircle2, ChevronRight, ChevronLeft, Wand2, ImageIcon, LayoutTemplate, Eye, Clock, Plus, Trash2, GripVertical, MousePointerClick, Link, Video, UploadCloud, User } from 'lucide-react';
-import { getStoredApiKey, fetchVoiceboxProfiles } from '../hooks/useDigitalSuite';
+import { getStoredApiKey } from '../hooks/useDigitalSuite';
 import { generateSceneImage } from '../utils/mediaGenerator';
 
 const STEPS = [
@@ -9,8 +9,7 @@ const STEPS = [
   { id: 2, title: 'Action', icon: MousePointerClick },
   { id: 3, title: 'Script', icon: Type },
   { id: 4, title: 'Visuals', icon: ImageIcon },
-  { id: 5, title: 'Audio', icon: Mic },
-  { id: 6, title: 'Review', icon: CheckCircle2 }
+  { id: 5, title: 'Review', icon: CheckCircle2 }
 ];
 
 const CAPTION_COLORS = [
@@ -143,12 +142,9 @@ export function VideoCreatorWizard() {
   const [voiceboxProfiles, setVoiceboxProfiles] = useState([]);
   
   React.useEffect(() => {
-    fetchVoiceboxProfiles().then(profiles => {
-      if (profiles && profiles.length > 0) {
-        setVoiceboxProfiles(profiles);
-        setSelectedVoice(profiles[0].id); // default to first real voice
-      }
-    });
+    // Mock external API loading
+    setVoiceboxProfiles(MOCK_VOICES);
+    setSelectedVoice(MOCK_VOICES[0].id);
   }, []);
 
   // Resolves the latest Gemini flash model synced from the DigitalSuite backend
@@ -353,12 +349,29 @@ export function VideoCreatorWizard() {
     }, 2000);
   };
 
-  const handleCompile = () => {
+  const [videoUrl, setVideoUrl] = useState(null);
+
+  const handleCompile = async () => {
     setIsCompiling(true);
-    setTimeout(() => {
+    try {
+      const response = await fetch('http://localhost:3000/api/render', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scenes, format: aspectRatio })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setVideoUrl(data.url);
+        setCurrentStep(6);
+      } else {
+        alert("Render failed: " + (data.error || "Unknown error"));
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Failed to compile video. Check console.");
+    } finally {
       setIsCompiling(false);
-      setCurrentStep(7);
-    }, 2000);
+    }
   };
 
   const handleCloneVoice = () => {
@@ -386,33 +399,32 @@ export function VideoCreatorWizard() {
     e.stopPropagation();
     if (playingVoice === voiceId) {
       if (sampleAudio) {
-        sampleAudio.pause();
+        window.speechSynthesis.cancel();
         setSampleAudio(null);
       }
       setPlayingVoice(null);
       return;
     }
     if (sampleAudio) {
-      sampleAudio.pause();
+      window.speechSynthesis.cancel();
     }
     setPlayingVoice(voiceId);
     
-    const text = encodeURIComponent("Hello! I am ready to narrate your next viral video.");
-    const audio = new Audio(`http://localhost:14800/generate/stream/live?profile_id=${voiceId}&text=${text}&language=en`);
-    setSampleAudio(audio);
+    const text = "Hello! I am ready to narrate your next viral video.";
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.onend = () => {
+      setPlayingVoice(null);
+      setSampleAudio(null);
+    };
+    utterance.onerror = () => {
+      setPlayingVoice(null);
+      setSampleAudio(null);
+    };
     
-    audio.play().catch(err => {
-      console.error("Failed to play sample:", err);
-      setPlayingVoice(null);
+    window.speechSynthesis.speak(utterance);
+    setSampleAudio({
+      pause: () => window.speechSynthesis.cancel()
     });
-    audio.onended = () => {
-      setPlayingVoice(null);
-      setSampleAudio(null);
-    };
-    audio.onerror = () => {
-      setPlayingVoice(null);
-      setSampleAudio(null);
-    };
   };
 
   return (
@@ -849,140 +861,14 @@ export function VideoCreatorWizard() {
                   onClick={() => setCurrentStep(5)}
                   className="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-xl font-medium transition-colors flex items-center shadow-lg shadow-primary/20"
                 >
-                  Configure Audio <ChevronRight size={18} className="ml-2" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 5: AUDIO */}
-          {currentStep === 5 && (
-            <div className="animate-in fade-in slide-in-from-right-8 duration-500 h-full flex flex-col">
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold mb-2">Audio & Voice</h2>
-                <p className="text-muted text-sm">Review voiceover scripts and set the background music vibe.</p>
-              </div>
-              
-              <div className="flex-1 space-y-6 overflow-y-auto pr-2 custom-scrollbar">
-                {/* AI Voice Actor */}
-                <div className="bg-surface border border-border rounded-2xl p-6 shadow-sm">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold flex items-center">
-                      <User className="text-accent mr-2" size={20}/> Select a Voice
-                    </h3>
-                    <button 
-                      onClick={() => setIsCloneModalOpen(true)}
-                      className="bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors flex items-center"
-                    >
-                      <Plus size={16} className="mr-1" /> Clone New Voice
-                    </button>
-                  </div>
-                  
-                  <div className="flex gap-3 overflow-x-auto pb-4 custom-scrollbar">
-                    {(voiceboxProfiles.length > 0 ? voiceboxProfiles : voices).map(voice => (
-                      <div key={voice.id} className="flex flex-col gap-3 shrink-0">
-                        {/* Voice Card */}
-                        <div 
-                          onClick={() => setSelectedVoice(voice.id)}
-                          className={`w-[200px] h-full rounded-xl border-2 p-4 cursor-pointer transition-all ${
-                            selectedVoice === voice.id 
-                              ? 'border-primary bg-primary/5 shadow-md shadow-primary/10' 
-                              : 'border-border bg-bg hover:border-border-subtle'
-                          }`}
-                        >
-                          <div className="flex justify-between items-start mb-2">
-                            <h4 className="font-bold text-sm line-clamp-1">{voice.name}</h4>
-                            {selectedVoice === voice.id && <CheckCircle2 size={16} className="text-primary ml-2 shrink-0" />}
-                          </div>
-                          <p className="text-xs text-muted line-clamp-2 leading-relaxed">{voice.description}</p>
-                        </div>
-                        
-                        {/* Play Sample Button (Outside Card) */}
-                        <button 
-                          onClick={(e) => handlePlaySample(voice.id, e)}
-                          className={`flex items-center justify-center py-2 px-3 rounded-lg border text-xs font-bold uppercase transition-all ${
-                            playingVoice === voice.id
-                              ? 'border-primary/30 bg-primary/10 text-primary'
-                              : 'border-border bg-surface text-muted hover:border-border-subtle hover:text-text'
-                          }`}
-                        >
-                          {playingVoice === voice.id ? (
-                            <div className="flex items-center space-x-1 h-3">
-                              <div className="w-1 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                              <div className="w-1 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                              <div className="w-1 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                              <div className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '450ms' }}></div>
-                              <span className="ml-2">Playing...</span>
-                            </div>
-                          ) : (
-                            <>
-                              <Play size={12} className="mr-1.5" fill="currentColor" /> Play Sample
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="bg-surface border border-border rounded-2xl p-6 shadow-sm">
-                  <h3 className="text-lg font-bold mb-4 flex items-center"><Mic className="text-purple-400 mr-2" size={20}/> Voiceover Scripts</h3>
-                  <div className="space-y-4">
-                    {scenes.map((scene, i) => (
-                      <div key={scene.id} className="flex space-x-4">
-                        <div className="w-8 h-8 rounded-full bg-surface-raised flex items-center justify-center shrink-0 text-sm font-medium">{i+1}</div>
-                        <div className="flex-1">
-                          <textarea 
-                            defaultValue={scene.voiceover} 
-                            onChange={(e) => {
-                                const val = e.target.value;
-                                setScenes(prev => prev.map(s => s.id === scene.id ? { ...s, voiceover: val } : s));
-                            }}
-                            className="w-full bg-surface-raised border border-border rounded-xl p-3 text-sm text-text focus:outline-none focus:border-primary resize-none h-20 mb-2" 
-                          />
-                          {scene.voiceover && selectedVoice && (
-                             <audio key={`${scene.id}-${selectedVoice}-${scene.voiceover}`} controls preload="none" className="w-full h-8 outline-none">
-                               <source src={`http://localhost:14800/generate/stream/live?profile_id=${selectedVoice}&text=${encodeURIComponent(scene.voiceover)}&language=en`} type="audio/wav" />
-                             </audio>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="bg-surface border border-border rounded-2xl p-6 shadow-sm">
-                  <h3 className="text-lg font-bold mb-4 flex items-center"><Music className="text-blue-400 mr-2" size={20}/> Background Music</h3>
-                  <div>
-                    <label className="text-xs text-muted block mb-2 font-medium uppercase tracking-wider">Music Vibe / Genre</label>
-                    <select 
-                      value={musicVibe}
-                      onChange={(e) => setMusicVibe(e.target.value)}
-                      className="w-full md:w-1/2 bg-bg border border-border rounded-xl p-3 text-sm text-text focus:outline-none focus:border-blue-400 appearance-none"
-                    >
-                      <option value="ambient">Ambient & Atmospheric</option>
-                      <option value="cinematic">Cinematic Epic</option>
-                      <option value="upbeat">Upbeat & Energetic</option>
-                      <option value="lofi">Lo-Fi Chill</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-6 pt-6 border-t border-border flex justify-between items-center shrink-0">
-                <button onClick={() => setCurrentStep(4)} className="text-muted hover:text-text px-4 py-2 font-medium transition-colors">Back</button>
-                <button 
-                  onClick={() => setCurrentStep(6)}
-                  className="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-xl font-medium transition-colors flex items-center shadow-lg shadow-primary/20"
-                >
                   Final Review <ChevronRight size={18} className="ml-2" />
                 </button>
               </div>
             </div>
           )}
 
-          {/* STEP 6: REVIEW */}
-          {currentStep === 6 && (
+          {/* STEP 5: REVIEW */}
+          {currentStep === 5 && (
             <div className="animate-in fade-in slide-in-from-right-8 duration-500 h-full flex flex-col max-w-4xl mx-auto w-full">
               <div className="text-center mb-8 shrink-0">
                 <div className="w-16 h-16 bg-gradient-to-br from-[#10b981] to-[#0ea5e9] rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl shadow-primary/20">
@@ -1036,7 +922,7 @@ export function VideoCreatorWizard() {
               </div>
 
               <div className="flex justify-between items-center mt-6 pt-6 border-t border-border shrink-0">
-                <button onClick={() => setCurrentStep(5)} className="text-muted hover:text-text px-4 py-2 font-medium transition-colors">Back</button>
+                <button onClick={() => setCurrentStep(4)} className="text-muted hover:text-text px-4 py-2 font-medium transition-colors">Back</button>
                 <button 
                   onClick={handleCompile}
                   disabled={isCompiling}
@@ -1044,40 +930,43 @@ export function VideoCreatorWizard() {
                     isCompiling ? 'bg-surface-raised text-muted cursor-not-allowed shadow-none' : 'bg-primary hover:bg-primary-dark text-white shadow-[#10b981]/30'
                   }`}
                 >
-                  {isCompiling ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin mr-3" />
-                      Compiling...
-                    </>
-                  ) : (
-                    <>
-                      <Play size={20} className="mr-3" fill="currentColor" />
-                      Compile Final Video
-                    </>
-                  )}
+                  {isCompiling ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin mr-2" /> : null}
+                  {isCompiling ? 'Rendering...' : 'Generate Video'}
                 </button>
               </div>
             </div>
           )}
 
-          {/* STEP 7: SUCCESS */}
-          {currentStep === 7 && (
+          {/* STEP 6: SUCCESS */}
+          {currentStep === 6 && (
             <div className="animate-in fade-in slide-in-from-bottom-8 duration-500 h-full flex flex-col justify-center max-w-lg mx-auto w-full text-center">
               <div className="w-24 h-24 bg-gradient-to-br from-[#10b981] to-[#0ea5e9] rounded-full flex items-center justify-center mx-auto mb-8 shadow-xl shadow-primary/20">
                 <CheckCircle2 size={48} className="text-text" />
               </div>
-              <h2 className="text-4xl font-bold mb-4">Video Rendering!</h2>
+              <h2 className="text-4xl font-bold mb-4">Video Rendered!</h2>
               <p className="text-muted mb-10 text-lg leading-relaxed">
-                Your video has been successfully sent to the rendering engine. You can monitor its progress in your video library.
+                Your video has been successfully rendered by the cloud engine.
               </p>
               
-              <button 
-                onClick={() => navigate('/videos')}
-                className="bg-surface border border-border hover:border-primary text-text px-8 py-4 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center mx-auto w-full text-lg group"
-              >
-                <Video size={24} className="mr-3 text-primary group-hover:scale-110 transition-transform" />
-                Go to My Videos
-              </button>
+              <div className="flex flex-col space-y-4">
+                {videoUrl && (
+                  <a 
+                    href={videoUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="bg-primary border border-border hover:border-primary text-text px-8 py-4 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center mx-auto w-full text-lg group"
+                  >
+                    <Play size={24} className="mr-3 text-white group-hover:scale-110 transition-transform" />
+                    <span className="text-white">Watch & Download Video</span>
+                  </a>
+                )}
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="bg-surface border border-border hover:border-primary text-text px-8 py-4 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center mx-auto w-full text-lg group"
+                >
+                  Create Another Video
+                </button>
+              </div>
             </div>
           )}
 
