@@ -3,8 +3,6 @@ import { Key, Save, CheckCircle2, ShieldAlert } from 'lucide-react';
 
 export function KeysView() {
   const [keys, setKeys] = useState({
-    REMOTION_SERVE_URL: '',
-    REMOTION_FUNCTION_NAME: '',
     AWS_ACCESS_KEY_ID: '',
     AWS_SECRET_ACCESS_KEY: '',
     AWS_REGION: 'us-east-1'
@@ -89,30 +87,6 @@ export function KeysView() {
                 onChange={handleChange}
                 placeholder="e.g. us-east-1"
                 className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-text focus:outline-none focus:border-primary font-mono transition-colors"
-              />
-            </div>
-
-            <div className="pt-6 border-t border-border">
-              <label className="block text-sm font-bold text-text mb-2 uppercase tracking-wider">Remotion Serve URL</label>
-              <input
-                type="url"
-                name="REMOTION_SERVE_URL"
-                value={keys.REMOTION_SERVE_URL}
-                onChange={handleChange}
-                placeholder="https://remotionlambda-...s3.us-east-1.amazonaws.com/.../index.html"
-                className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-text focus:outline-none focus:border-primary font-mono text-sm transition-colors"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-text mb-2 uppercase tracking-wider">Remotion Function Name</label>
-              <input
-                type="text"
-                name="REMOTION_FUNCTION_NAME"
-                value={keys.REMOTION_FUNCTION_NAME}
-                onChange={handleChange}
-                placeholder="remotion-render-4-0-507-..."
-                className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-text focus:outline-none focus:border-primary font-mono text-sm transition-colors"
               />
             </div>
           </div>

@@ -51,8 +51,8 @@ app.post('/api/render', async (req, res) => {
     const { scenes, format = '9:16', credentials = {} } = req.body;
     
     // Check for Lambda setup
-    const serveUrl = credentials.REMOTION_SERVE_URL || process.env.REMOTION_SERVE_URL;
-    const functionName = credentials.REMOTION_FUNCTION_NAME || process.env.REMOTION_FUNCTION_NAME;
+    const serveUrl = credentials.REMOTION_SERVE_URL || process.env.REMOTION_SERVE_URL || 'https://remotionlambda-useast1-9y1366941d.s3.us-east-1.amazonaws.com/sites/content-maker-templates/index.html';
+    const functionName = credentials.REMOTION_FUNCTION_NAME || process.env.REMOTION_FUNCTION_NAME || 'remotion-render-4-0-507-mem2048mb-disk2048mb-120sec';
     const region = credentials.AWS_REGION || process.env.REMOTION_AWS_REGION || 'us-east-1';
     
     if (!serveUrl || !functionName) {
