@@ -230,7 +230,7 @@ export function VideoCreatorWizard() {
         ? `The FINAL scene must end with the viewer being told to comment the word "${ctaValue}" to get something valuable.`
         : `The FINAL scene must direct the viewer to click the link in bio.`;
 
-      const prompt = `You are an expert short-form video director and script writer.\n\nBase Idea: "${selectedIdea.title}"\nScript Draft: "${selectedIdea.draft_script}"\n\nTransform this into a structured scene-by-scene storyboard.\n\nRequirements:\n- Create exactly 4-6 scenes\n- CRITICAL: Each scene MUST be maximum 3 seconds (duration_seconds <= 3.0)\n- Fast, punchy pacing to hold attention on TikTok/Reels\n- Each scene needs a distinct visual concept and voiceover line\n- Caption text: 1-4 punchy UPPERCASE words\n- ${ctaInstruction}\n- Aspect ratio: ${aspectRatio}\n\nReturn ONLY valid JSON (no markdown, no explanation):\n{\n  "scenes": [\n    {\n      "id": "scene-1",\n      "duration": "2.5s",\n      "visualConcept": "Detailed visual description for this scene",\n      "voiceover": "Exact words spoken in this scene"\n    }\n  ]\n}`;
+      const prompt = `You are an expert short-form video director and script writer.\n\nBase Idea: "${selectedIdea.title}"\nScript Draft: "${selectedIdea.draft_script}"\n\nTransform this into a structured scene-by-scene storyboard.\n\nRequirements:\n- Create exactly 4-6 scenes\n- CRITICAL: Each scene MUST be maximum 3 seconds (duration_seconds <= 3.0)\n- Fast, punchy pacing to hold attention on TikTok/Reels\n- Each scene needs a distinct visual concept and voiceover line\n- Caption text: 1-4 punchy UPPERCASE words\n- Generate a highly-engaging post description (caption for TikTok/Reels) containing emojis and hashtags.\n- ${ctaInstruction}\n- Aspect ratio: ${aspectRatio}\n\nReturn ONLY valid JSON (no markdown, no explanation):\n{\n  "postDescription": "The highly-engaging caption to accompany the video, including the CTA.",\n  "scenes": [\n    {\n      "id": "scene-1",\n      "duration": "2.5s",\n      "visualConcept": "Detailed visual description for this scene",\n      "voiceover": "Exact words spoken in this scene"\n    }\n  ]\n}`;
 
       const targetModel = await getLatestFlashModel();
       const res = await fetch(
@@ -251,6 +251,9 @@ export function VideoCreatorWizard() {
       const scriptJson = (parsed || {});
       if (scriptJson.scenes) {
         setAvScript(scriptJson.scenes);
+        if (scriptJson.postDescription) {
+          setPostDescription(scriptJson.postDescription);
+        }
         // Initialize scenes structure matching avScript, without images yet
         setScenes(scriptJson.scenes.map(s => ({ ...s, image: '', caption: s.voiceover || '' })));
         setCurrentStep(3);
@@ -354,7 +357,7 @@ export function VideoCreatorWizard() {
   const handleCompile = async () => {
     setIsCompiling(true);
     try {
-      const response = await fetch('http://localhost:3000/api/render', {
+      const response = await fetch('/api/render', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ scenes, format: aspectRatio })
