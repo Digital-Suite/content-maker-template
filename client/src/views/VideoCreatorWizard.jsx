@@ -291,8 +291,26 @@ export function VideoCreatorWizard() {
       for (let index = 0; index < newScenes.length; index++) {
         const scene = newScenes[index];
         const imageUrl = await generateSceneImage(scene.visualConcept, aspectRatio, 'nano_banana', apiKey);
-        newScenes[index].image = imageUrl;
-        newScenes[index].imageHistory = [imageUrl];
+        
+        let finalUrl = imageUrl;
+        if (imageUrl.startsWith('data:image')) {
+          try {
+            const uploadRes = await fetch('/api/upload-media', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ image: imageUrl })
+            });
+            if (uploadRes.ok) {
+              const uploadData = await uploadRes.json();
+              if (uploadData.success) finalUrl = uploadData.url;
+            }
+          } catch (err) {
+            console.error("Upload failed", err);
+          }
+        }
+        
+        newScenes[index].image = finalUrl;
+        newScenes[index].imageHistory = [finalUrl];
         newScenes[index].currentImageIndex = 0;
         newScenes[index].caption = scene.voiceover || '';
         newScenes[index].captionPosition = 'center';
@@ -318,13 +336,30 @@ export function VideoCreatorWizard() {
       const apiKey = getStoredApiKey('gemini');
       const newImageUrl = await generateSceneImage(scene.visualConcept, aspectRatio, 'nano_banana', apiKey);
       
+      let finalUrl = newImageUrl;
+      if (newImageUrl.startsWith('data:image')) {
+        try {
+          const uploadRes = await fetch('/api/upload-media', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: newImageUrl })
+          });
+          if (uploadRes.ok) {
+            const uploadData = await uploadRes.json();
+            if (uploadData.success) finalUrl = uploadData.url;
+          }
+        } catch (err) {
+          console.error("Upload failed", err);
+        }
+      }
+      
       setScenes(prev => {
         const newScenes = [...prev];
         const target = newScenes[sceneIndex];
         const history = target.imageHistory || [target.image];
-        target.imageHistory = [...history, newImageUrl];
+        target.imageHistory = [...history, finalUrl];
         target.currentImageIndex = target.imageHistory.length - 1;
-        target.image = newImageUrl;
+        target.image = finalUrl;
         return newScenes;
       });
     } catch (e) {

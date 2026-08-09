@@ -6,12 +6,44 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.set('trust proxy', true);
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+const fs = require('fs');
+const uploadsPath = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsPath)) {
+  fs.mkdirSync(uploadsPath);
+}
+app.use('/uploads', express.static(uploadsPath));
 
 // API Routes
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', app: 'Content Maker' });
+});
+
+app.post('/api/upload-media', (req, res) => {
+  try {
+    const { image } = req.body;
+    if (!image || !image.startsWith('data:image/')) {
+      return res.status(400).json({ error: 'Invalid image data' });
+    }
+    const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
+    const ext = image.split(';')[0].split('/')[1] || 'jpeg';
+    const filename = `img_${Date.now()}_${Math.floor(Math.random() * 1000)}.${ext}`;
+    const filePath = path.join(uploadsPath, filename);
+    
+    fs.writeFileSync(filePath, base64Data, 'base64');
+    
+    const baseUrl = req.protocol + '://' + req.get('host');
+    const url = `${baseUrl}/uploads/${filename}`;
+    
+    res.json({ success: true, url });
+  } catch (err) {
+    console.error("Upload error:", err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post('/api/render', async (req, res) => {
