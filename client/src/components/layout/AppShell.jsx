@@ -5,6 +5,7 @@ import { Sidebar } from './Sidebar';
 const APP_NAVIGATION = [
   { id: 'create', label: 'Create Video', path: '' },
   { id: 'videos', label: 'My Videos', path: 'videos' },
+  { id: 'keys', label: 'Settings & Keys', path: 'keys' },
 ];
 
 export function AppShell() {

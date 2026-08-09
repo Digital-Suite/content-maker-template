@@ -392,10 +392,13 @@ export function VideoCreatorWizard() {
   const handleCompile = async () => {
     setIsCompiling(true);
     try {
+      const savedKeys = localStorage.getItem('ds_content_maker_keys');
+      const credentials = savedKeys ? JSON.parse(savedKeys) : {};
+
       const response = await fetch('/api/render', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scenes, format: aspectRatio })
+        body: JSON.stringify({ scenes, format: aspectRatio, credentials })
       });
       const data = await response.json();
       if (data.success) {

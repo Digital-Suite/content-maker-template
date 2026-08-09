@@ -48,11 +48,20 @@ app.post('/api/upload-media', (req, res) => {
 
 app.post('/api/render', async (req, res) => {
   try {
-    const { scenes, format = '9:16' } = req.body;
+    const { scenes, format = '9:16', credentials = {} } = req.body;
     
     // Check for Lambda setup
-    if (!process.env.REMOTION_SERVE_URL || !process.env.REMOTION_FUNCTION_NAME) {
-      return res.status(500).json({ error: "Remotion Lambda is not configured in .env yet." });
+    const serveUrl = credentials.REMOTION_SERVE_URL || process.env.REMOTION_SERVE_URL;
+    const functionName = credentials.REMOTION_FUNCTION_NAME || process.env.REMOTION_FUNCTION_NAME;
+    const region = credentials.AWS_REGION || process.env.REMOTION_AWS_REGION || 'us-east-1';
+    
+    if (!serveUrl || !functionName) {
+      return res.status(500).json({ error: "Remotion Lambda is not configured in .env or settings yet." });
+    }
+    
+    if (credentials.AWS_ACCESS_KEY_ID && credentials.AWS_SECRET_ACCESS_KEY) {
+      process.env.AWS_ACCESS_KEY_ID = credentials.AWS_ACCESS_KEY_ID;
+      process.env.AWS_SECRET_ACCESS_KEY = credentials.AWS_SECRET_ACCESS_KEY;
     }
 
     const { renderMediaOnLambda, getRenderProgress } = require('@remotion/lambda/client');
@@ -60,9 +69,9 @@ app.post('/api/render', async (req, res) => {
     const compositionId = format === '9:16' ? 'ContentMakerVideo_Portrait' : (format === '1:1' ? 'ContentMakerVideo_Square' : 'ContentMakerVideo_Landscape');
 
     const render = await renderMediaOnLambda({
-      region: process.env.REMOTION_AWS_REGION || 'us-east-1',
-      functionName: process.env.REMOTION_FUNCTION_NAME,
-      serveUrl: process.env.REMOTION_SERVE_URL,
+      region,
+      functionName,
+      serveUrl,
       composition: compositionId,
       inputProps: { scenes },
       codec: 'h264',
@@ -76,8 +85,8 @@ app.post('/api/render', async (req, res) => {
     let progress = await getRenderProgress({
       renderId: render.renderId,
       bucketName: render.bucketName,
-      functionName: process.env.REMOTION_FUNCTION_NAME,
-      region: process.env.REMOTION_AWS_REGION || 'us-east-1',
+      functionName,
+      region,
     });
 
     while (!progress.done && !progress.fatalErrorEncountered) {
@@ -85,8 +94,8 @@ app.post('/api/render', async (req, res) => {
       progress = await getRenderProgress({
         renderId: render.renderId,
         bucketName: render.bucketName,
-        functionName: process.env.REMOTION_FUNCTION_NAME,
-        region: process.env.REMOTION_AWS_REGION || 'us-east-1',
+        functionName,
+        region,
       });
     }
 
