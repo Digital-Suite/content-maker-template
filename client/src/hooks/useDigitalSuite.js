@@ -116,7 +116,7 @@ export async function fetchVoiceboxProfiles() {
     const res = await fetch("http://localhost:14800/profiles");
     if (!res.ok) return [];
     const data = await res.json();
-    return data.profiles || [];
+    return Array.isArray(data) ? data : (data.profiles || []);
   } catch (e) {
     console.warn("Failed to fetch Voicebox profiles", e);
     return [];
