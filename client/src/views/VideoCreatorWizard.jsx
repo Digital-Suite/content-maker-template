@@ -989,17 +989,29 @@ export function VideoCreatorWizard() {
                 Your video has been successfully rendered by the cloud engine.
               </p>
               
-              <div className="flex flex-col space-y-4">
+              <div className="flex flex-col space-y-6 w-full">
                 {videoUrl && (
-                  <a 
-                    href={videoUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="bg-primary border border-border hover:border-primary text-text px-8 py-4 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center mx-auto w-full text-lg group"
-                  >
-                    <Play size={24} className="mr-3 text-white group-hover:scale-110 transition-transform" />
-                    <span className="text-white">Watch & Download Video</span>
-                  </a>
+                  <div className="flex flex-col space-y-4">
+                    <div className="rounded-xl overflow-hidden shadow-2xl shadow-black/50 border border-border bg-black aspect-video flex items-center justify-center">
+                      <video 
+                        src={videoUrl} 
+                        controls 
+                        autoPlay
+                        className="w-full h-full object-contain"
+                        controlsList="nodownload"
+                      />
+                    </div>
+                    <a 
+                      href={videoUrl}
+                      download="ContentMaker_Video.mp4"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="bg-primary border border-border hover:border-primary text-text px-8 py-4 rounded-xl font-bold transition-all shadow-lg flex items-center justify-center mx-auto w-full text-lg group"
+                    >
+                      <Play size={24} className="mr-3 text-white group-hover:scale-110 transition-transform" />
+                      <span className="text-white">Download Video</span>
+                    </a>
+                  </div>
                 )}
                 <button 
                   onClick={() => window.location.reload()}
