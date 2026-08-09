@@ -5,7 +5,7 @@ export const RemotionRoot: React.FC = () => {
   return (
     <>
       <Composition
-        id="ContentMakerVideo_Portrait"
+        id="ContentMakerVideo-Portrait"
         component={ContentMakerComposition}
         durationInFrames={300} // Will be dynamically calculated based on props
         fps={30}
@@ -26,7 +26,7 @@ export const RemotionRoot: React.FC = () => {
         }}
       />
       <Composition
-        id="ContentMakerVideo_Landscape"
+        id="ContentMakerVideo-Landscape"
         component={ContentMakerComposition}
         durationInFrames={300}
         fps={30}
@@ -37,7 +37,7 @@ export const RemotionRoot: React.FC = () => {
         }}
       />
       <Composition
-        id="ContentMakerVideo_Square"
+        id="ContentMakerVideo-Square"
         component={ContentMakerComposition}
         durationInFrames={300}
         fps={30}

@@ -66,7 +66,7 @@ app.post('/api/render', async (req, res) => {
 
     const { renderMediaOnLambda, getRenderProgress } = require('@remotion/lambda/client');
 
-    const compositionId = format === '9:16' ? 'ContentMakerVideo_Portrait' : (format === '1:1' ? 'ContentMakerVideo_Square' : 'ContentMakerVideo_Landscape');
+    const compositionId = format === '9:16' ? 'ContentMakerVideo-Portrait' : (format === '1:1' ? 'ContentMakerVideo-Square' : 'ContentMakerVideo-Landscape');
 
     const render = await renderMediaOnLambda({
       region,
