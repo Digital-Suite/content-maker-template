@@ -1,6 +1,6 @@
 {
   "name": "content-maker-template",
-  "version": "1.0.24",
+  "version": "1.0.25",
   "description": "AI-powered content creation engine",
   "main": "server.js",
   "scripts": {
